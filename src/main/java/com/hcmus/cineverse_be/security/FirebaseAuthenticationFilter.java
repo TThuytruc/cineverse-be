@@ -1,8 +1,6 @@
 package com.hcmus.cineverse_be.security;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.FirebaseToken;
+import com.hcmus.cineverse_be.exception.FirebaseAuthenticationException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,27 +18,16 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
         String token = request.getHeader("Authorization");
 
         if (token == null || !token.startsWith("Bearer ")) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Unauthorized: Missing or invalid token");
+            FirebaseAuthenticationEntryPoint entryPoint = new FirebaseAuthenticationEntryPoint();
+            entryPoint.commence(request, response, new FirebaseAuthenticationException("Token is missing."));
             return;
         }
 
-        token = token.substring(7); // Loại bỏ "Bearer " khỏi token
+        token = token.substring(7);
 
-        try {
-            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
-            String uid = decodedToken.getUid();
-
-            // Tạo FirebaseAuthenticationToken và set vào SecurityContext
-            FirebaseAuthenticationToken authenticationToken =
-                    new FirebaseAuthenticationToken(uid, decodedToken);
-            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-
-        } catch (FirebaseAuthException e) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Unauthorized: Invalid token");
-            return;
-        }
+        FirebaseAuthenticationToken authenticationToken =
+                new FirebaseAuthenticationToken(token);
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
         filterChain.doFilter(request, response);
     }
