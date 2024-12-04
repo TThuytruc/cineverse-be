@@ -4,8 +4,10 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.hcmus.cineverse_be.request.RegisterRequest;
 import com.hcmus.cineverse_be.response.BasicResponse;
+import com.hcmus.cineverse_be.response.auth.RefreshTokenResponse;
 import com.hcmus.cineverse_be.service.UserService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,6 +47,13 @@ public class UserController {
             response.put("authenticated", false);
         }
 
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/refresh", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<RefreshTokenResponse> refreshToken(@RequestBody Map<String, String> body) {
+        String refreshToken = body.get("refreshToken");
+        RefreshTokenResponse response = userService.refreshAccessToken(refreshToken);
         return ResponseEntity.ok(response);
     }
 }

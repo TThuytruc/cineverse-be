@@ -6,8 +6,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
 import com.google.cloud.firestore.Firestore;
+import com.hcmus.cineverse_be.client.FirebaseAuthClient;
 import com.hcmus.cineverse_be.exception.ValidationException;
+import com.hcmus.cineverse_be.response.auth.RefreshTokenResponse;
 import com.hcmus.cineverse_be.validation.UserValidation;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -18,11 +22,13 @@ public class UserService {
     private final FirebaseAuth firebaseAuth;
     private final Firestore firestore;
     private final UserValidation userValidation;
+    private final FirebaseAuthClient firebaseAuthClient;
 
-    public UserService(FirebaseAuth firebaseAuth, Firestore firestore, UserValidation userValidation) {
+    public UserService(FirebaseAuth firebaseAuth, Firestore firestore, UserValidation userValidation, FirebaseAuthClient firebaseAuthClient) {
         this.firebaseAuth = firebaseAuth;
         this.firestore = firestore;
         this.userValidation = userValidation;
+        this.firebaseAuthClient = firebaseAuthClient;
     }
 
     public void create(String username, String email, String password) {
@@ -115,5 +121,9 @@ public class UserService {
 
             throw new RuntimeException("An error occurred while checking email.", e);
         }
+    }
+
+    public RefreshTokenResponse refreshAccessToken(@NonNull final String refreshToken) {
+        return firebaseAuthClient.refreshAccessToken(refreshToken);
     }
 }
