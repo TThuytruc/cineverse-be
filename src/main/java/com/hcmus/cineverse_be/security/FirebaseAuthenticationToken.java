@@ -1,39 +1,31 @@
 package com.hcmus.cineverse_be.security;
 
+import com.google.firebase.auth.FirebaseToken;
+import lombok.Getter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 
-import java.util.Collection;
-
+@Getter
 public class FirebaseAuthenticationToken extends AbstractAuthenticationToken {
-    private final Object principal;
-    private final Object credentials;
 
-    public FirebaseAuthenticationToken(Object principal, Object credentials) {
+    private final FirebaseToken firebaseToken;
+
+    public FirebaseAuthenticationToken(String firebaseToken) {
         super(null);
-        this.principal = principal;
-        this.credentials = credentials;
-        setAuthenticated(false);
+        this.firebaseToken = null;
     }
 
-    public FirebaseAuthenticationToken(
-            Object principal,
-            Object credentials,
-            Collection<? extends GrantedAuthority> authorities
-    ) {
-        super(authorities);
-        this.principal = principal;
-        this.credentials = credentials;
-        setAuthenticated(true);
+    public FirebaseAuthenticationToken(FirebaseToken firebaseToken) {
+        super(null);
+        this.firebaseToken = firebaseToken;
     }
 
     @Override
     public Object getCredentials() {
-        return credentials;
+        return firebaseToken;
     }
 
     @Override
     public Object getPrincipal() {
-        return principal;
+        return firebaseToken != null ? firebaseToken.getUid() : null;
     }
 }

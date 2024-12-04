@@ -9,5 +9,4 @@ public class CineverseBeApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(CineverseBeApplication.class, args);
 	}
-
 }
