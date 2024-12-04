@@ -12,17 +12,12 @@ import org.springframework.security.web.authentication.preauth.AbstractPreAuthen
 
 @Configuration
 public class SecurityConfig {
-    @Autowired
-    FirebaseAuthenticationEntryPoint entryPoint;
-
-    @Autowired
-    FirebaseAuthenticationProvider provider;
 
     @Bean
     @Order(1)
     public SecurityFilterChain publicEndpoints(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .securityMatcher("/public")
+                .securityMatcher("/public", "/user/**")
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll()
                 );
@@ -38,9 +33,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().authenticated()
                 )
-                .exceptionHandling((exception)-> exception.authenticationEntryPoint(entryPoint))
-                .addFilterBefore(new FirebaseAuthenticationFilter(), AbstractPreAuthenticatedProcessingFilter.class)
-                .authenticationProvider(provider);
+                .addFilterBefore(new FirebaseAuthenticationFilter(), AbstractPreAuthenticatedProcessingFilter.class);
 
         return http.build();
     }
