@@ -32,6 +32,7 @@ public class FirebaseAuthClient {
         System.out.println("Sending request with refreshToken: " + refreshToken);
 
         try {
+            //System.out.println("webApiKey: " + webApiKey);
             final var response = RestClient.create(REFRESH_TOKEN_URL)
                     .post()
                     .uri(uriBuilder -> uriBuilder.queryParam("key", webApiKey).build())
