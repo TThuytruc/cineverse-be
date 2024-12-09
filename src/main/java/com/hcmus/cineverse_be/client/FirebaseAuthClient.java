@@ -49,8 +49,7 @@ public class FirebaseAuthClient {
                     .build();
         } catch (HttpClientErrorException exception) {
             System.err.println("Error refreshing token: " + exception.getResponseBodyAsString());
-            throw new FirebaseAuthenticationException("Failed to refresh token." + exception.toString());
+            throw new FirebaseAuthenticationException("Failed to refresh token.");
         }
     }
-
 }
