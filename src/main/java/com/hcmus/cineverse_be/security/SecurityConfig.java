@@ -1,6 +1,5 @@
 package com.hcmus.cineverse_be.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -17,7 +16,7 @@ public class SecurityConfig {
     @Order(1)
     public SecurityFilterChain publicEndpoints(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .securityMatcher("/public", "/user/**")
+                .securityMatcher("/public", "/user/**", "/movie/**")
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll()
                 );

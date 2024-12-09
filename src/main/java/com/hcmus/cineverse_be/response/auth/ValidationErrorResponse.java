@@ -1,4 +1,4 @@
-package com.hcmus.cineverse_be.response;
+package com.hcmus.cineverse_be.response.auth;
 
 import lombok.Getter;
 import lombok.Setter;
