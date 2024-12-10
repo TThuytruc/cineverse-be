@@ -2,6 +2,7 @@ package com.hcmus.cineverse_be.service;
 
 import com.hcmus.cineverse_be.exception.ResourceNotFoundException;
 import com.hcmus.cineverse_be.response.movie.MovieDetailResponse;
+import com.hcmus.cineverse_be.response.movie.SearchMoviesResponse;
 import com.hcmus.cineverse_be.response.movie.TrendingMoviesResponse;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -127,6 +128,59 @@ public class MovieService {
                     movieDetailResponse.setRevenue(((Number) response.get("revenue")).longValue());
 
                     return movieDetailResponse;
+                });
+    }
+
+    public Mono<SearchMoviesResponse> getSearchMovies(String query, int page) {
+        return webClient.get()
+                .uri("search/movie" + "?query=" + query + "&page=" + page)
+                .retrieve()
+                .onStatus(
+                        status -> status.value() == 400,
+                        clientResponse -> clientResponse.bodyToMono(Map.class).flatMap(body -> {
+                            if (body.containsKey("status_code")) {
+                                int statusCode = (Integer) body.get("status_code");
+
+                                if (statusCode == 22) {
+                                    return Mono.error(new IllegalArgumentException((String) body.get("status_message")));
+                                } else {
+                                    return Mono.error(new RuntimeException("An error occurred while getting trending movies: " + body.get("status_message")));
+                                }
+                            }
+
+                            return Mono.error(new RuntimeException("An error occurred while getting trending movies."));
+                        })
+                )
+                .onStatus(
+                        status -> status.value() != 200 && status.value() != 400,
+                        clientResponse -> Mono.error(new RuntimeException("An error occurred while getting trending movies."))
+                )
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .map(response -> {
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> results = (List<Map<String, Object>>) response.get("results");
+                    List<MovieDetailResponse> filteredData = results.stream()
+                            .map(item -> {
+                                MovieDetailResponse moviesSearchResult = new MovieDetailResponse();
+                                moviesSearchResult.setId(((Number) item.get("id")).longValue());
+                                moviesSearchResult.setTitle((String) item.get("title"));
+                                moviesSearchResult.setPosterPath(baseSmallPosterUrl + item.get("poster_path"));
+                                moviesSearchResult.setReleaseDate((String) item.get("release_date"));
+                                moviesSearchResult.setVoteAverage((double) item.get("vote_average"));
+                                moviesSearchResult.setVoteCount((int) item.get("vote_count"));
+
+                                return moviesSearchResult;
+
+                            })
+                            .collect(Collectors.toList());
+
+                    SearchMoviesResponse searchMoviesResponse = new SearchMoviesResponse();
+                    searchMoviesResponse.setPage((int) response.get("page"));
+                    searchMoviesResponse.setResults(filteredData);
+                    searchMoviesResponse.setTotalPages((int) response.get("total_pages"));
+                    searchMoviesResponse.setTotalResults((int) response.get("total_results"));
+
+                    return searchMoviesResponse;
                 });
     }
 }
