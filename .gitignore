@@ -34,3 +34,5 @@ build/
 
 ### Firebase ###
 src/main/resources/serviceAccountKey.json
+.env
+/.env
