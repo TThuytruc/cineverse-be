@@ -3,6 +3,7 @@ package com.hcmus.cineverse_be.exception;
 import lombok.Getter;
 import org.springframework.security.core.AuthenticationException;
 
+//@Component
 @Getter
 public class FirebaseAuthenticationException extends AuthenticationException {
     private final String message;

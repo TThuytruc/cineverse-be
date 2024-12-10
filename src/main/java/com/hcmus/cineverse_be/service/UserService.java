@@ -119,7 +119,7 @@ public class UserService {
                 return false;
             }
 
-            throw new RuntimeException("Error when checking email", e);
+            throw new RuntimeException("An error occurred while checking email.", e);
         }
     }
 

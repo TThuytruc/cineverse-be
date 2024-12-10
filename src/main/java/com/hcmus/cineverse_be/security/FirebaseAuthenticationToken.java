@@ -9,11 +9,6 @@ public class FirebaseAuthenticationToken extends AbstractAuthenticationToken {
 
     private final FirebaseToken firebaseToken;
 
-    public FirebaseAuthenticationToken(String firebaseToken) {
-        super(null);
-        this.firebaseToken = null;
-    }
-
     public FirebaseAuthenticationToken(FirebaseToken firebaseToken) {
         super(null);
         this.firebaseToken = firebaseToken;
@@ -26,6 +21,6 @@ public class FirebaseAuthenticationToken extends AbstractAuthenticationToken {
 
     @Override
     public Object getPrincipal() {
-        return firebaseToken != null ? firebaseToken.getUid() : null;
+        return firebaseToken.getUid();
     }
 }
