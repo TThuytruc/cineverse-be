@@ -43,6 +43,7 @@ public class UserController {
             String token = authorizationHeader.substring(7);
             FirebaseAuth.getInstance().verifyIdToken(token);
             response.put("authenticated", true);
+            System.out.println("Authenticated token: " + token);
         } catch (FirebaseAuthException e) {
             response.put("authenticated", false);
         }
@@ -54,6 +55,7 @@ public class UserController {
     public ResponseEntity<RefreshTokenResponse> refreshToken(@RequestBody Map<String, String> body) {
         String refreshToken = body.get("refreshToken");
         RefreshTokenResponse response = userService.refreshAccessToken(refreshToken);
+        System.out.println("Refreshed token: " + response.getId_token());
         return ResponseEntity.ok(response);
     }
 }
