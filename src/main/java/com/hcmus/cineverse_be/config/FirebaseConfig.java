@@ -12,8 +12,10 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 @Configuration
 @RequiredArgsConstructor
@@ -21,12 +23,12 @@ import java.io.IOException;
 public class FirebaseConfig {
 
     private final FirebaseConfigurationProperties firebaseConfigurationProperties;
-    @Value("${firebase.config.path}")
-    private String firebaseConfigPath;
+    @Value("${com.example.firebase.private-key}")
+    private String firebasePrivateKey;
 
     @Bean
     public FirebaseApp firebaseApp() throws IOException {
-        FileInputStream serviceAccount = new FileInputStream(firebaseConfigPath);
+        InputStream serviceAccount = new ByteArrayInputStream(firebasePrivateKey.getBytes());
 
         FirebaseOptions options = FirebaseOptions.builder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))
