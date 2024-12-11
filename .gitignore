@@ -32,7 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 
-### Firebase ###
-src/main/resources/serviceAccountKey.json
+
 .env
+
+.idx
 /.env

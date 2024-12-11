@@ -2,6 +2,7 @@ package com.hcmus.cineverse_be.controller;
 
 import com.hcmus.cineverse_be.response.BasicResponse;
 import com.hcmus.cineverse_be.response.movie.MovieDetailResponse;
+import com.hcmus.cineverse_be.response.movie.SearchMoviesResponse;
 import com.hcmus.cineverse_be.response.movie.TrendingMoviesResponse;
 import com.hcmus.cineverse_be.service.MovieService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -69,5 +70,29 @@ public class MovieController {
     @GetMapping("/{id}")
     public Mono<MovieDetailResponse> getMovieDetail(@PathVariable long id) {
         return movieService.getMovieDetail(id);
+    }
+
+
+    // Search movies
+    @Operation(
+            summary = "Search movies",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            content = @Content(schema = @Schema(implementation = SearchMoviesResponse.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Invalid page",
+                            content = @Content(schema = @Schema(implementation = BasicResponse.class))
+                    )
+            }
+    )
+    @GetMapping("/search")
+    public Mono<SearchMoviesResponse> getSearchMovies(
+        @RequestParam(name = "query", required = false) String query,
+        @RequestParam(defaultValue = "1") int page) {
+
+        return movieService.getSearchMovies(query, page);
     }
 }
