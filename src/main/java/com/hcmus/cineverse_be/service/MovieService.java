@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class MovieService {
     private final String SMALL_POSTER_SIZE = "w342";
     private final String LARGE_POSTER_SIZE = "w780";
+    private final String MEDIUM_BACKDROP_SIZE = "w780";
 
     @Value("${tmdb.api.base-image-url}")
     private String baseImageUrl;
@@ -26,6 +27,7 @@ public class MovieService {
     private final WebClient webClient;
     private String baseSmallPosterUrl;
     private String baseLargePosterUrl;
+    private String baseMediumBackdropUrl;
 
 
     public MovieService(WebClient webClient) {
@@ -36,6 +38,7 @@ public class MovieService {
     public void init() {
         this.baseSmallPosterUrl = baseImageUrl + SMALL_POSTER_SIZE;
         this.baseLargePosterUrl = baseImageUrl + LARGE_POSTER_SIZE;
+        this.baseMediumBackdropUrl = baseImageUrl + MEDIUM_BACKDROP_SIZE;
     }
 
     public Mono<TrendingMoviesResponse> getTrending(String period, int page) {
@@ -119,6 +122,7 @@ public class MovieService {
                     movieDetailResponse.setTagline((String) response.get("tagline"));
                     movieDetailResponse.setOverview((String) response.get("overview"));
                     movieDetailResponse.setPosterPath(baseLargePosterUrl + response.get("poster_path"));
+                    movieDetailResponse.setBackdropPath(baseMediumBackdropUrl + response.get("backdrop_path"));
                     movieDetailResponse.setVoteAverage((double) response.get("vote_average"));
                     movieDetailResponse.setVoteCount((int) response.get("vote_count"));
                     movieDetailResponse.setGenres(genreList);

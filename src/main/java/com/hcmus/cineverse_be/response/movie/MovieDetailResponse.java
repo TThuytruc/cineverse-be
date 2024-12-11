@@ -15,6 +15,7 @@ public class MovieDetailResponse {
     private String tagline;
     private String overview;
     private String posterPath;
+    private String backdropPath;
     private double voteAverage;
     private int voteCount;
     private List<MovieGenre> genres;
