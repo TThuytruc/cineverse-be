@@ -144,16 +144,16 @@ public class MovieService {
                                 if (statusCode == 22) {
                                     return Mono.error(new IllegalArgumentException((String) body.get("status_message")));
                                 } else {
-                                    return Mono.error(new RuntimeException("An error occurred while getting trending movies: " + body.get("status_message")));
+                                    return Mono.error(new RuntimeException("An error occurred while searching movies: " + body.get("status_message")));
                                 }
                             }
 
-                            return Mono.error(new RuntimeException("An error occurred while getting trending movies."));
+                            return Mono.error(new RuntimeException("An error occurred while searching movies."));
                         })
                 )
                 .onStatus(
                         status -> status.value() != 200 && status.value() != 400,
-                        clientResponse -> Mono.error(new RuntimeException("An error occurred while getting trending movies."))
+                        clientResponse -> Mono.error(new RuntimeException("An error occurred while searching movies."))
                 )
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                 .map(response -> {

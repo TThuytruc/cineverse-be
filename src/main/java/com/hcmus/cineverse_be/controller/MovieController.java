@@ -72,17 +72,18 @@ public class MovieController {
         return movieService.getMovieDetail(id);
     }
 
-    // Get trending movies
+
+    // Search movies
     @Operation(
-            summary = "Get search movies",
+            summary = "Search movies",
             responses = {
                     @ApiResponse(
                             responseCode = "200",
-                            content = @Content(schema = @Schema(implementation = TrendingMoviesResponse.class))
+                            content = @Content(schema = @Schema(implementation = SearchMoviesResponse.class))
                     ),
                     @ApiResponse(
                             responseCode = "400",
-                            description = "Invalid page/Invalid period",
+                            description = "Invalid page",
                             content = @Content(schema = @Schema(implementation = BasicResponse.class))
                     )
             }
