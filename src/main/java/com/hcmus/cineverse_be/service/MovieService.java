@@ -4,6 +4,8 @@ import com.hcmus.cineverse_be.exception.ResourceNotFoundException;
 import com.hcmus.cineverse_be.response.movie.MovieDetailResponse;
 import com.hcmus.cineverse_be.response.movie.TrendingMoviesResponse;
 import jakarta.annotation.PostConstruct;
+
+import org.checkerframework.checker.units.qual.m;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
@@ -125,7 +127,7 @@ public class MovieService {
                     movieDetailResponse.setReleaseDate((String) response.get("release_date"));
                     movieDetailResponse.setBudget(((Number) response.get("budget")).longValue());
                     movieDetailResponse.setRevenue(((Number) response.get("revenue")).longValue());
-
+                    movieDetailResponse.setBackdropPath(response.get("backdrop_path").toString());
                     return movieDetailResponse;
                 });
     }
