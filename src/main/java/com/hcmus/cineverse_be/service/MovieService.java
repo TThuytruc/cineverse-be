@@ -124,7 +124,7 @@ public class MovieService {
                     movieDetailResponse.setTagline((String) response.get("tagline"));
                     movieDetailResponse.setOverview((String) response.get("overview"));
                     movieDetailResponse.setPosterPath(baseLargePosterUrl + response.get("poster_path"));
-                    movieDetailResponse.setBackdropPath(baseMediumBackdropUrl + response.get("backdrop_path"));
+                    //movieDetailResponse.setBackdropPath(baseMediumBackdropUrl + response.get("backdrop_path"));
                     movieDetailResponse.setVoteAverage((double) response.get("vote_average"));
                     movieDetailResponse.setVoteCount((int) response.get("vote_count"));
                     movieDetailResponse.setGenres(genreList);

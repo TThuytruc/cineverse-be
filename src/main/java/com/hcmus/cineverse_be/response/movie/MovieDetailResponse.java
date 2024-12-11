@@ -23,7 +23,6 @@ public class MovieDetailResponse {
     private String releaseDate;
     private long budget;
     private long revenue;
-    private String backdropPath;
 
     @Getter
     @Setter
