@@ -11,7 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 public class SearchMoviesResponse {
     private int page;
-    private List<MovieDetailResponse> results;
+//    private List<MovieDetailResponse> results;
     private int totalPages;
     private int totalResults;
 }

@@ -1,8 +1,10 @@
 package com.hcmus.cineverse_be.controller;
 
+import com.hcmus.cineverse_be.dto.MovieDetailDTO;
+import com.hcmus.cineverse_be.dto.MovieTrendingDTO;
+import com.hcmus.cineverse_be.entity.MovieTrending;
 import com.hcmus.cineverse_be.response.BasicResponse;
-import com.hcmus.cineverse_be.response.movie.MovieDetailResponse;
-import com.hcmus.cineverse_be.response.movie.SearchMoviesResponse;
+import com.hcmus.cineverse_be.response.PaginationResponse;
 import com.hcmus.cineverse_be.response.movie.TrendingMoviesResponse;
 import com.hcmus.cineverse_be.service.MovieService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,17 +15,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/movie")
 @Tag(name = "Movie")
 public class MovieController {
+
     private final MovieService movieService;
 
     public MovieController(MovieService movieService) {
         this.movieService = movieService;
     }
+
 
     // Get trending movies
     @Operation(
@@ -41,14 +44,20 @@ public class MovieController {
             }
     )
     @GetMapping("/trending")
-    public Mono<TrendingMoviesResponse> getTrendingMovies(
+    public TrendingMoviesResponse getTrendingMovies(
             @Parameter(
                     schema = @Schema(allowableValues = {"day", "week"}, defaultValue = "day")
             )
             @RequestParam(defaultValue = "day") String period,
-            @RequestParam(defaultValue = "1") int page) {
+            @RequestParam(defaultValue = "1") String page) {
 
-        return movieService.getTrending(period, page);
+        try {
+            int pageNum = Integer.parseInt(page);
+            return movieService.getTrending(period, pageNum);
+
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid page: Page must be an integer.");
+        }
     }
 
 
@@ -58,7 +67,12 @@ public class MovieController {
             responses = {
                     @ApiResponse(
                             responseCode = "200",
-                            content = @Content(schema = @Schema(implementation = MovieDetailResponse.class))
+                            content = @Content(schema = @Schema(implementation = MovieDetailDTO.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Invalid movie ID",
+                            content = @Content(schema = @Schema(implementation = BasicResponse.class))
                     ),
                     @ApiResponse(
                             responseCode = "404",
@@ -68,31 +82,36 @@ public class MovieController {
             }
     )
     @GetMapping("/{id}")
-    public Mono<MovieDetailResponse> getMovieDetail(@PathVariable long id) {
-        return movieService.getMovieDetail(id);
+    public MovieDetailDTO getMovieDetail(@PathVariable String id) {
+        try {
+            long movieId = Long.parseLong(id);
+            return movieService.getMovieDetail(movieId);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid ID: Movie ID must be an integer.");
+        }
     }
 
 
-    // Search movies
-    @Operation(
-            summary = "Search movies",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            content = @Content(schema = @Schema(implementation = SearchMoviesResponse.class))
-                    ),
-                    @ApiResponse(
-                            responseCode = "400",
-                            description = "Invalid page",
-                            content = @Content(schema = @Schema(implementation = BasicResponse.class))
-                    )
-            }
-    )
-    @GetMapping("/search")
-    public Mono<SearchMoviesResponse> getSearchMovies(
-        @RequestParam(name = "query", required = false) String query,
-        @RequestParam(defaultValue = "1") int page) {
-
-        return movieService.getSearchMovies(query, page);
-    }
+//    // Search movies
+//    @Operation(
+//            summary = "Search movies",
+//            responses = {
+//                    @ApiResponse(
+//                            responseCode = "200",
+//                            content = @Content(schema = @Schema(implementation = SearchMoviesResponse.class))
+//                    ),
+//                    @ApiResponse(
+//                            responseCode = "400",
+//                            description = "Invalid page",
+//                            content = @Content(schema = @Schema(implementation = BasicResponse.class))
+//                    )
+//            }
+//    )
+//    @GetMapping("/search")
+//    public Mono<SearchMoviesResponse> getSearchMovies(
+//        @RequestParam(name = "query", required = false) String query,
+//        @RequestParam(defaultValue = "1") int page) {
+//
+//        return movieService.getSearchMovies(query, page);
+//    }
 }
