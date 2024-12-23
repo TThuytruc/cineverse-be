@@ -1,12 +1,13 @@
 package com.hcmus.cineverse_be.service;
 
+import com.hcmus.cineverse_be.dto.CastDTO;
+import com.hcmus.cineverse_be.dto.CrewDTO;
 import com.hcmus.cineverse_be.dto.MovieDetailDTO;
 import com.hcmus.cineverse_be.dto.MovieTrendingDTO;
 import com.hcmus.cineverse_be.entity.MovieDetail;
 import com.hcmus.cineverse_be.entity.MovieTrending;
 import com.hcmus.cineverse_be.exception.ResourceNotFoundException;
 import com.hcmus.cineverse_be.mapper.MovieMapper;
-import com.hcmus.cineverse_be.response.PaginationResponse;
 import com.hcmus.cineverse_be.response.movie.TrendingMoviesResponse;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +24,11 @@ import java.util.stream.Collectors;
 public class MovieService {
     private final String SMALL_POSTER_SIZE = "w342";
     private final String LARGE_POSTER_SIZE = "w780";
+    private final String SMALL_PROFILE_SIZE = "w185";
+//    private final String LARGE_PROFILE_SIZE = "h632";
 
     private final int MOVIES_PER_PAGE = 20;
+
     private final String DB_ALL = "movies";
     private final String DB_TRENDING_DAY = "movies_trending_day";
     private final String DB_TRENDING_WEEK = "movies_trending_week";
@@ -35,6 +39,7 @@ public class MovieService {
 
     private String baseSmallPosterUrl;
     private String baseLargePosterUrl;
+    private String baseSmallProfileUrl;
 
     @Autowired
     private MovieMapper movieMapper;
@@ -46,10 +51,12 @@ public class MovieService {
     public void init() {
         this.baseSmallPosterUrl = baseImageUrl + SMALL_POSTER_SIZE;
         this.baseLargePosterUrl = baseImageUrl + LARGE_POSTER_SIZE;
+        this.baseSmallProfileUrl = baseImageUrl + SMALL_PROFILE_SIZE;
     }
 
 
     public TrendingMoviesResponse getTrending(String period, int page) {
+
         if (page <= 0) {
             throw new IllegalArgumentException("Invalid page: Page must be greater than 0.");
         }
@@ -79,7 +86,10 @@ public class MovieService {
 
         List<MovieTrendingDTO> results = trendingMovies.stream()
                 .map(movie -> {
-                    movie.setPosterPath(baseSmallPosterUrl + movie.getPosterPath());
+                    if(movie.getPosterPath() != null) {
+                        movie.setPosterPath(baseSmallPosterUrl + movie.getPosterPath());
+                    }
+
                     return movieMapper.toMovieTrendingDTO(movie);
                 })
                 .collect(Collectors.toList());
@@ -98,7 +108,28 @@ public class MovieService {
         }
 
         MovieDetailDTO movieDetailDTO = movieMapper.toMovieDetailDTO(movieDetail);
-        movieDetailDTO.setPosterPath(baseLargePosterUrl + movieDetailDTO.getPosterPath());
+
+        if(movieDetailDTO.getPosterPath() != null) {
+            movieDetailDTO.setPosterPath(baseLargePosterUrl + movieDetailDTO.getPosterPath());
+        }
+
+        List<CastDTO> listCast = movieDetailDTO.getCast();
+        if (listCast != null) {
+            listCast.forEach(cast -> {
+                if(cast.getProfilePath() != null) {
+                    cast.setProfilePath(baseSmallProfileUrl + cast.getProfilePath());
+                }
+            });
+        }
+
+        List<CrewDTO> listCrew = movieDetailDTO.getCrew();
+        if (listCrew != null) {
+            listCrew.forEach(crew -> {
+                if(crew.getProfilePath() != null) {
+                    crew.setProfilePath(baseSmallProfileUrl + crew.getProfilePath());
+                }
+            });
+        }
 
         return movieDetailDTO;
     }

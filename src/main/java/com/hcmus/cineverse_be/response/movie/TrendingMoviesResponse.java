@@ -12,4 +12,3 @@ public class TrendingMoviesResponse extends PaginationResponse<MovieTrendingDTO>
         super(page, results, totalPages, totalResults);
     }
 }
-

@@ -33,6 +33,13 @@ public class MovieDetail {
     private int voteCount;
 
     private List<Genre> genres;
+
+    @Field("credits.cast")
+    private List<Cast> cast;
+
+    @Field("credits.crew")
+    private List<Crew> crew;
+
     private String status;
 
     @Field("release_date")

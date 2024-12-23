@@ -6,9 +6,15 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 @Getter
 @Setter
-public class Genre {
+public class Crew {
     @Field("id")
-    private int id;
+    private long id;
 
     private String name;
+
+    @Field("profile_path")
+    private String profilePath;
+
+    private String department;
+    private String job;
 }
