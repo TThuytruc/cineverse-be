@@ -1,15 +1,13 @@
-package com.hcmus.cineverse_be.response.movie;
+package com.hcmus.cineverse_be.dto;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
 
 @Getter
 @Setter
-@NoArgsConstructor
-public class MovieDetailResponse {
+public class MovieDetailDTO {
     private long id;
     private String title;
     private String tagline;
@@ -18,17 +16,11 @@ public class MovieDetailResponse {
     private String backdropPath;
     private double voteAverage;
     private int voteCount;
-    private List<MovieGenre> genres;
+    private List<GenreDTO> genres;
+    private List<CastDTO> cast;
+    private List<CrewDTO> crew;
     private String status;
     private String releaseDate;
     private long budget;
     private long revenue;
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    public static class MovieGenre {
-        private int id;
-        private String name;
-    }
 }

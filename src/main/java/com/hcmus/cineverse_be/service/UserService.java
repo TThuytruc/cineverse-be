@@ -1,17 +1,18 @@
 package com.hcmus.cineverse_be.service;
 
-import com.google.cloud.firestore.Query;
-import com.google.cloud.firestore.QuerySnapshot;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
-import com.google.cloud.firestore.Firestore;
 import com.hcmus.cineverse_be.client.FirebaseAuthClient;
+import com.hcmus.cineverse_be.entity.User;
 import com.hcmus.cineverse_be.exception.ValidationException;
 import com.hcmus.cineverse_be.response.auth.RefreshTokenResponse;
 import com.hcmus.cineverse_be.validation.UserValidation;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -20,13 +21,14 @@ import java.util.Map;
 @Service
 public class UserService {
     private final FirebaseAuth firebaseAuth;
-    private final Firestore firestore;
     private final UserValidation userValidation;
     private final FirebaseAuthClient firebaseAuthClient;
 
-    public UserService(FirebaseAuth firebaseAuth, Firestore firestore, UserValidation userValidation, FirebaseAuthClient firebaseAuthClient) {
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+    public UserService(FirebaseAuth firebaseAuth, UserValidation userValidation, FirebaseAuthClient firebaseAuthClient) {
         this.firebaseAuth = firebaseAuth;
-        this.firestore = firestore;
         this.userValidation = userValidation;
         this.firebaseAuthClient = firebaseAuthClient;
     }
@@ -87,26 +89,23 @@ public class UserService {
             UserRecord userRecord = firebaseAuth.createUser(request);
             String uid = userRecord.getUid();
 
-            Map<String, Object> userData = new HashMap<>();
-            userData.put("uid", uid);
-            userData.put("username", username);
+            User user = new User();
+            user.setUid(uid);
+            user.setUsername(username);
 
-            firestore.collection("user").document(uid)
-                    .set(userData)
-                    .get();
+            mongoTemplate.save(user);
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create user in Firebase", e);
+            throw new RuntimeException("An error occurred while creating user.", e);
         }
     }
 
     private boolean checkUsernameExists(String username) {
         try {
-            Query query = firestore.collection("user").whereEqualTo("username", username);
-            QuerySnapshot snapshot = query.get().get();
-            return !snapshot.isEmpty();
+            Query query = new Query(Criteria.where("username").is(username));
+            return mongoTemplate.exists(query, User.class);
         } catch (Exception e) {
-            return false;
+            throw new RuntimeException("An error occurred while checking username.", e);
         }
     }
 
