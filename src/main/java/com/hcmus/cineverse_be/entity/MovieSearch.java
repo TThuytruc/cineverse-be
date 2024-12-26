@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class MovieTrending {
+public class MovieSearch {
     @Id
     private String _id;
 
@@ -18,7 +18,7 @@ public class MovieTrending {
 
     @Field("poster_path")
     private String posterPath;
-    
+
     @Field("backdrop_path")
     private String backdropPath;
 

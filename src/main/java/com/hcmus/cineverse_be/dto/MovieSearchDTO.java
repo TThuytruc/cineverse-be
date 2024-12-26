@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class MovieTrendingDTO {
+public class MovieSearchDTO {
     private long id;
     private String title;
     private String posterPath;

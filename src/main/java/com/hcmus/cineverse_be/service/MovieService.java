@@ -3,11 +3,14 @@ package com.hcmus.cineverse_be.service;
 import com.hcmus.cineverse_be.dto.CastDTO;
 import com.hcmus.cineverse_be.dto.CrewDTO;
 import com.hcmus.cineverse_be.dto.MovieDetailDTO;
+import com.hcmus.cineverse_be.dto.MovieSearchDTO;
 import com.hcmus.cineverse_be.dto.MovieTrendingDTO;
 import com.hcmus.cineverse_be.entity.MovieDetail;
+import com.hcmus.cineverse_be.entity.MovieSearch;
 import com.hcmus.cineverse_be.entity.MovieTrending;
 import com.hcmus.cineverse_be.exception.ResourceNotFoundException;
 import com.hcmus.cineverse_be.mapper.MovieMapper;
+import com.hcmus.cineverse_be.response.movie.SearchMovieResponse;
 import com.hcmus.cineverse_be.response.movie.TrendingMoviesResponse;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +39,9 @@ public class MovieService {
 
     @Value("${tmdb.api.base-image-url}")
     private String baseImageUrl;
+
+    @Value("${tmdb.api.original-image-url}")
+    private String originalImageUrl;
 
     private String baseSmallPosterUrl;
     private String baseLargePosterUrl;
@@ -89,6 +95,9 @@ public class MovieService {
                     if(movie.getPosterPath() != null) {
                         movie.setPosterPath(baseSmallPosterUrl + movie.getPosterPath());
                     }
+                    if(movie.getBackdropPath() != null) {
+                        movie.setBackdropPath(originalImageUrl + movie.getBackdropPath());
+                    }
 
                     return movieMapper.toMovieTrendingDTO(movie);
                 })
@@ -134,57 +143,51 @@ public class MovieService {
         return movieDetailDTO;
     }
 
+    public SearchMovieResponse getSearchMovies(String query, int page) {
 
-//    public Mono<SearchMoviesResponse> getSearchMovies(String query, int page) {
-//        return webClient.get()
-//                .uri("search/movie" + "?query=" + query + "&page=" + page)
-//                .retrieve()
-//                .onStatus(
-//                        status -> status.value() == 400,
-//                        clientResponse -> clientResponse.bodyToMono(Map.class).flatMap(body -> {
-//                            if (body.containsKey("status_code")) {
-//                                int statusCode = (Integer) body.get("status_code");
-//
-//                                if (statusCode == 22) {
-//                                    return Mono.error(new IllegalArgumentException((String) body.get("status_message")));
-//                                } else {
-//                                    return Mono.error(new RuntimeException("An error occurred while searching movies: " + body.get("status_message")));
-//                                }
-//                            }
-//
-//                            return Mono.error(new RuntimeException("An error occurred while searching movies."));
-//                        })
-//                )
-//                .onStatus(
-//                        status -> status.value() != 200 && status.value() != 400,
-//                        clientResponse -> Mono.error(new RuntimeException("An error occurred while searching movies."))
-//                )
-//                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-//                .map(response -> {
-//                    @SuppressWarnings("unchecked")
-//                    List<Map<String, Object>> results = (List<Map<String, Object>>) response.get("results");
-//                    List<MovieDetailResponse> filteredData = results.stream()
-//                            .map(item -> {
-//                                MovieDetailResponse moviesSearchResult = new MovieDetailResponse();
-//                                moviesSearchResult.setId(((Number) item.get("id")).longValue());
-//                                moviesSearchResult.setTitle((String) item.get("title"));
-//                                moviesSearchResult.setPosterPath(baseSmallPosterUrl + item.get("poster_path"));
-//                                moviesSearchResult.setReleaseDate((String) item.get("release_date"));
-//                                moviesSearchResult.setVoteAverage((double) item.get("vote_average"));
-//                                moviesSearchResult.setVoteCount((int) item.get("vote_count"));
-//
-//                                return moviesSearchResult;
-//
-//                            })
-//                            .collect(Collectors.toList());
-//
-//                    SearchMoviesResponse searchMoviesResponse = new SearchMoviesResponse();
-//                    searchMoviesResponse.setPage((int) response.get("page"));
-//                    searchMoviesResponse.setResults(filteredData);
-//                    searchMoviesResponse.setTotalPages((int) response.get("total_pages"));
-//                    searchMoviesResponse.setTotalResults((int) response.get("total_results"));
-//
-//                    return searchMoviesResponse;
-//                });
-//    }
+        if (page <= 0) {
+            throw new IllegalArgumentException("Invalid page: Page must be greater than 0.");
+        }
+        if (query == null || query.isEmpty()) {
+            throw new IllegalArgumentException("There are no movies that matched your query");
+        }
+
+        String collectionName = "movies";
+
+        Query countQuery = new Query();
+        countQuery.addCriteria(
+                Criteria.where("title").regex(query, "i")
+        );
+
+        long totalResults = mongoTemplate.count(countQuery, MovieSearch.class, collectionName);
+        int totalPages = (int) Math.ceil((double) totalResults / MOVIES_PER_PAGE);
+
+        if (page > totalPages) {
+            throw new IllegalArgumentException("Invalid page: Page must be less than or equal to " + totalPages + ".");
+        }
+
+
+        Query searchQuery = new Query();
+        searchQuery.addCriteria(
+                Criteria.where("title").regex(query, "i")
+        );
+        searchQuery.skip((long) (page - 1) * MOVIES_PER_PAGE);
+        searchQuery.limit(MOVIES_PER_PAGE);
+        List<MovieSearch> searchMovies = mongoTemplate.find(searchQuery, MovieSearch.class, collectionName);
+
+        List<MovieSearchDTO> results = searchMovies.stream()
+                .map(movie -> {
+                    if(movie.getPosterPath() != null) {
+                        movie.setPosterPath(baseSmallPosterUrl + movie.getPosterPath());
+                    }
+                    if(movie.getBackdropPath() != null) {
+                        movie.setBackdropPath(originalImageUrl + movie.getBackdropPath());
+                    }
+
+                    return movieMapper.toMovieSearchDTO(movie);
+                })
+                .collect(Collectors.toList());
+
+        return new SearchMovieResponse(page, results, totalPages, (int) totalResults);
+    }
 }

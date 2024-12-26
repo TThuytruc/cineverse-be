@@ -8,6 +8,7 @@ import org.mapstruct.Mapper;
 public interface MovieMapper {
     MovieTrendingDTO toMovieTrendingDTO(MovieTrending movie);
     MovieDetailDTO toMovieDetailDTO(MovieDetail movieDetail);
+    MovieSearchDTO toMovieSearchDTO(MovieSearch movieSearch);
     GenreDTO toGenreDTO(Genre genre);
     CastDTO toCastDTO(Cast cast);
     CrewDTO toCrewDTO(Crew crew);
