@@ -3,6 +3,7 @@ package com.hcmus.cineverse_be.mapper;
 import com.hcmus.cineverse_be.dto.*;
 import com.hcmus.cineverse_be.entity.*;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface MovieMapper {
@@ -12,4 +13,8 @@ public interface MovieMapper {
     GenreDTO toGenreDTO(Genre genre);
     CastDTO toCastDTO(Cast cast);
     CrewDTO toCrewDTO(Crew crew);
+
+    @Mapping(source = "authorDetails", target = "authorDetails")
+    ReviewDTO toReviewDTO(Review review);
+    AuthorDetailsDTO toAuthorDetailsDTO(AuthorDetails authorDetails);
 }

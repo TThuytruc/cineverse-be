@@ -1,10 +1,6 @@
 package com.hcmus.cineverse_be.service;
 
-import com.hcmus.cineverse_be.dto.CastDTO;
-import com.hcmus.cineverse_be.dto.CrewDTO;
-import com.hcmus.cineverse_be.dto.MovieDetailDTO;
-import com.hcmus.cineverse_be.dto.MovieSearchDTO;
-import com.hcmus.cineverse_be.dto.MovieTrendingDTO;
+import com.hcmus.cineverse_be.dto.*;
 import com.hcmus.cineverse_be.entity.MovieDetail;
 import com.hcmus.cineverse_be.entity.MovieSearch;
 import com.hcmus.cineverse_be.entity.MovieTrending;
@@ -138,6 +134,15 @@ public class MovieService {
             listCrew.forEach(crew -> {
                 if(crew.getProfilePath() != null) {
                     crew.setProfilePath(baseSmallProfileUrl + crew.getProfilePath());
+                }
+            });
+        }
+
+        List<ReviewDTO> listReviews = movieDetailDTO.getReviews();
+        if (listReviews != null) {
+            listReviews.forEach(review -> {
+                if(review.getAuthorDetails().getAvatarPath() != null) {
+                    review.getAuthorDetails().setAvatarPath(baseSmallProfileUrl + review.getAuthorDetails().getAvatarPath());
                 }
             });
         }

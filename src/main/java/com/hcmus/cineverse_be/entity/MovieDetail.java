@@ -40,6 +40,9 @@ public class MovieDetail {
     @Field("credits.crew")
     private List<Crew> crew;
 
+    @Field("reviews")
+    private List<Review> reviews;
+
     private String status;
 
     @Field("release_date")
