@@ -28,13 +28,17 @@ public class FirebaseConfig {
 
     @Bean
     public FirebaseApp firebaseApp() throws IOException {
-        InputStream serviceAccount = new ByteArrayInputStream(firebasePrivateKey.getBytes());
+        if (FirebaseApp.getApps().isEmpty()) {
+            InputStream serviceAccount = new ByteArrayInputStream(firebasePrivateKey.getBytes());
 
-        FirebaseOptions options = FirebaseOptions.builder()
-                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                .build();
+            FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                    .build();
 
-        return FirebaseApp.initializeApp(options);
+            return FirebaseApp.initializeApp(options);
+        } else {
+            return  FirebaseApp.getInstance();
+        }
     }
 
     @Bean
