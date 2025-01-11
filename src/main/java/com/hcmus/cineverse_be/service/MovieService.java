@@ -169,7 +169,7 @@ public class MovieService {
         long totalResults = mongoTemplate.count(countQuery, MovieSearch.class, collectionName);
         int totalPages = (int) Math.ceil((double) totalResults / MOVIES_PER_PAGE);
 
-        if (page > totalPages) {
+        if (page > totalPages + 1) {
             throw new IllegalArgumentException("Invalid page: Page must be less than or equal to " + totalPages + ".");
         }
 
