@@ -7,6 +7,7 @@ import com.hcmus.cineverse_be.response.BasicResponse;
 import com.hcmus.cineverse_be.response.PaginationResponse;
 import com.hcmus.cineverse_be.response.movie.SearchMovieResponse;
 import com.hcmus.cineverse_be.response.movie.TrendingMoviesResponse;
+import com.hcmus.cineverse_be.response.retriever.RetrieverResponse;
 import com.hcmus.cineverse_be.service.MovieService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -118,6 +119,40 @@ public class MovieController {
 
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid page: Page must be an integer.");
+        }
+    }
+
+    @Operation(
+            summary = "Get llm search movies",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            content = @Content(schema = @Schema(implementation = RetrieverResponse.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Invalid ",
+                            content = @Content(schema = @Schema(implementation = BasicResponse.class))
+                    )
+            }
+    )
+    @GetMapping("/llm-movie-search")
+    public SearchMovieResponse getLLMMovieSearch(
+            @RequestParam("collectionName") String collectionName,
+            @RequestParam("query") String query,
+            @RequestParam(name = "amount", defaultValue = "1") Integer amount,
+            @RequestParam(name = "threshold", defaultValue = "0.25") Double threshold) {
+
+        try {
+
+            return movieService.getMoviesFromLlmRetriever(
+                    collectionName,
+                    query,
+                    amount,
+                    threshold);
+
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid parameters in llm movie search.");
         }
     }
 

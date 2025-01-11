@@ -6,17 +6,21 @@ import com.hcmus.cineverse_be.entity.MovieSearch;
 import com.hcmus.cineverse_be.entity.MovieTrending;
 import com.hcmus.cineverse_be.exception.ResourceNotFoundException;
 import com.hcmus.cineverse_be.mapper.MovieMapper;
+import com.hcmus.cineverse_be.response.AIApiResponse;
 import com.hcmus.cineverse_be.response.movie.SearchMovieResponse;
 import com.hcmus.cineverse_be.response.movie.TrendingMoviesResponse;
+import com.hcmus.cineverse_be.response.retriever.RetrieverResponse;
 import jakarta.annotation.PostConstruct;
 
 import org.checkerframework.checker.units.qual.m;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,6 +39,8 @@ public class MovieService {
     private final String DB_TRENDING_WEEK = "movies_trending_week";
 
 
+    private WebClient webClient;
+
     @Value("${tmdb.api.base-image-url}")
     private String baseImageUrl;
 
@@ -51,11 +57,18 @@ public class MovieService {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    @Value("${llm.api.key}")
+    private String llmApiKey;
+
     @PostConstruct
     public void init() {
         this.baseSmallPosterUrl = baseImageUrl + SMALL_POSTER_SIZE;
         this.baseLargePosterUrl = baseImageUrl + LARGE_POSTER_SIZE;
         this.baseSmallProfileUrl = baseImageUrl + SMALL_PROFILE_SIZE;
+    }
+
+    public MovieService(WebClient webClient) {
+        this.webClient = webClient;
     }
 
 
@@ -197,4 +210,51 @@ public class MovieService {
 
         return new SearchMovieResponse(page, results, totalPages, (int) totalResults);
     }
+
+    public RetrieverResponse getLlmMovieRetrieverResponse(
+            String collectionName,
+            String query,
+            int amount,
+            double threshold) {
+
+        RetrieverResponse response = webClient.get()
+                        .uri(uriBuilder -> uriBuilder
+                                .path("/retriever/")
+                                .queryParam("llm_api_key", llmApiKey)
+                                .queryParam("collection_name", collectionName)
+                                .queryParam("query", query)
+                                .queryParam("amount", amount)
+                                .queryParam("threshold", threshold)
+                                .build())
+                        .retrieve()
+                        .bodyToMono(new ParameterizedTypeReference<AIApiResponse<RetrieverResponse>>() {})
+                        .map(AIApiResponse::getData)
+                        .block();
+
+
+         return response;
+    }
+
+    public SearchMovieResponse getMoviesFromLlmRetriever(String collectionName, String query, int amount, double threshold) {
+        RetrieverResponse retrieverResponse = getLlmMovieRetrieverResponse(collectionName, query, amount, threshold);
+        List<String> movieIds = retrieverResponse.getResult();
+
+        Query queryMovies = new Query(Criteria.where("_id").in(movieIds));
+        List<MovieSearch> movies = mongoTemplate.find(queryMovies, MovieSearch.class, DB_ALL);
+
+        List<MovieSearchDTO> results = movies.stream()
+                .map(movie -> {
+                    if (movie.getPosterPath() != null) {
+                        movie.setPosterPath(baseSmallPosterUrl + movie.getPosterPath());
+                    }
+                    if (movie.getBackdropPath() != null) {
+                        movie.setBackdropPath(originalImageUrl + movie.getBackdropPath());
+                    }
+                    return movieMapper.toMovieSearchDTO(movie);
+                })
+                .collect(Collectors.toList());
+
+        return new SearchMovieResponse(1, results, 1, results.size());
+    }
+
 }
