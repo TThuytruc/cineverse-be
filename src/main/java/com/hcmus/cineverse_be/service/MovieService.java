@@ -1,6 +1,7 @@
 package com.hcmus.cineverse_be.service;
 
 import com.hcmus.cineverse_be.dto.*;
+import com.hcmus.cineverse_be.entity.Genre;
 import com.hcmus.cineverse_be.entity.MovieDetail;
 import com.hcmus.cineverse_be.entity.MovieSearch;
 import com.hcmus.cineverse_be.entity.MovieTrending;
@@ -9,10 +10,10 @@ import com.hcmus.cineverse_be.mapper.MovieMapper;
 import com.hcmus.cineverse_be.response.AIApiResponse;
 import com.hcmus.cineverse_be.response.movie.SearchMovieResponse;
 import com.hcmus.cineverse_be.response.movie.TrendingMoviesResponse;
+import com.hcmus.cineverse_be.response.navigate.NavigationResponse;
 import com.hcmus.cineverse_be.response.retriever.RetrieverResponse;
 import jakarta.annotation.PostConstruct;
 
-import org.checkerframework.checker.units.qual.m;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -22,6 +23,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,7 +39,15 @@ public class MovieService {
     private final String DB_ALL = "movies";
     private final String DB_TRENDING_DAY = "movies_trending_day";
     private final String DB_TRENDING_WEEK = "movies_trending_week";
+    private final String DB_GENRES = "movie_genres";
 
+    private final String CAST_PAGE = "CAST_PAGE";
+    private final String MOVIE_PAGE = "MOVIE_PAGE";
+    private final String GENRE_PAGE = "GENRE_PAGE";
+    private final String SEARCH_PAGE = "SEARCH_PAGE";
+    private final String HOME_PAGE = "HOME_PAGE";
+    private final String PROFILE_PAGE = "PROFILE_PAGE";
+    private final String NONE  = "NONE";
 
     private WebClient webClient;
 
@@ -211,28 +221,36 @@ public class MovieService {
         return new SearchMovieResponse(page, results, totalPages, (int) totalResults);
     }
 
-    public RetrieverResponse getLlmMovieRetrieverResponse(
+    private RetrieverResponse getLlmMovieRetrieverResponse(
             String collectionName,
             String query,
             int amount,
             double threshold) {
+        try {
+            
+        
+            RetrieverResponse response = webClient.get()
+                            .uri(uriBuilder -> {uriBuilder
+                                    .path("/retriever/")
+                                    .queryParam("llm_api_key", llmApiKey)
+                                    .queryParam("collection_name", collectionName)
+                                    .queryParam("query", query)
+                                    .queryParam("amount", amount)
+                                    .queryParam("threshold", threshold);
+                                    
+                                    System.out.println(uriBuilder.build());
+                                    return uriBuilder.build();})
+                            .retrieve()
+                            .bodyToMono(new ParameterizedTypeReference<AIApiResponse<RetrieverResponse>>() {})
+                            .map(AIApiResponse::getData)
+                            .block();
 
-        RetrieverResponse response = webClient.get()
-                        .uri(uriBuilder -> uriBuilder
-                                .path("/retriever/")
-                                .queryParam("llm_api_key", llmApiKey)
-                                .queryParam("collection_name", collectionName)
-                                .queryParam("query", query)
-                                .queryParam("amount", amount)
-                                .queryParam("threshold", threshold)
-                                .build())
-                        .retrieve()
-                        .bodyToMono(new ParameterizedTypeReference<AIApiResponse<RetrieverResponse>>() {})
-                        .map(AIApiResponse::getData)
-                        .block();
 
-
-         return response;
+            return response;
+        } catch (Exception e) {
+            System.out.println("Error when retrieve: "+ e);
+            return null;
+        }
     }
 
     public SearchMovieResponse getMoviesFromLlmRetriever(String collectionName, String query, int amount, double threshold) {
@@ -257,4 +275,191 @@ public class MovieService {
         return new SearchMovieResponse(1, results, 1, results.size());
     }
 
+    private NavigationResponse getMovieNavigationResponse(String query) {
+
+
+        /*NavigationResponse response = webClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/navigate/")
+                        .queryParam("llm_api_key", llmApiKey)
+                        .queryParam("query", query)
+                        .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<AIApiResponse<NavigationResponse>>() {})
+                .map(AIApiResponse::getData)
+                .block();*/
+
+        NavigationResponse response2 = webClient.post()
+                .uri(uriBuilder -> { uriBuilder
+                        .path("/navigate/")
+                        .queryParam("llm_api_key", llmApiKey)
+                        .queryParam("query", query);
+
+                        System.out.println(uriBuilder.build());
+
+
+                        return uriBuilder.build();}
+                )
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<AIApiResponse<NavigationResponse>>() {})
+                .map(AIApiResponse::getData)
+                .block();
+
+        System.out.println(response2);
+
+        return response2;
+        //return response;
+    }
+
+    public NavigationResponse getAINavigation(String query) {
+        NavigationResponse navigationResponse = getMovieNavigationResponse(query);
+        if (navigationResponse == null || navigationResponse.getParams() == null) {
+            return navigationResponse;
+        }
+
+        if (navigationResponse.getRoute().equals(CAST_PAGE) 
+            || navigationResponse.getRoute().equals(MOVIE_PAGE)) {
+            List<String> movieIds = (List<String>) navigationResponse.getParams().get("movie_ids");
+
+            if (movieIds == null || movieIds.isEmpty()) {
+                return navigationResponse;
+            }
+
+            Query queryMovies = new Query(Criteria.where("_id").in(movieIds));
+            List<MovieSearch> movies = mongoTemplate.find(queryMovies, MovieSearch.class, DB_ALL);
+    
+            List<MovieSearchDTO> results = movies.stream()
+                    .map(movie -> {
+                        if (movie.getPosterPath() != null) {
+                            movie.setPosterPath(baseSmallPosterUrl + movie.getPosterPath());
+                        }
+                        if (movie.getBackdropPath() != null) {
+                            movie.setBackdropPath(originalImageUrl + movie.getBackdropPath());
+                        }
+                        return movieMapper.toMovieSearchDTO(movie);
+                    })
+                    .collect(Collectors.toList());
+
+            return new NavigationResponse(
+                navigationResponse.getRoute(), 
+                Collections.singletonMap("movies", results), 
+                true);
+            
+        }
+
+        if (navigationResponse.getRoute().equals(GENRE_PAGE)) {
+           
+            List<String> genreIds = extractListIdsFromMapObject(navigationResponse, "genre_ids");
+
+            if (genreIds == null || genreIds.isEmpty()) {
+                return navigationResponse;
+            }
+
+            List<Integer> genresTmdbIds = getGenresTmdbIdByIds(genreIds);
+
+            Query queryMovies = new Query(Criteria.where("genres.id").in(genresTmdbIds));
+            
+            List<MovieSearch> movies = mongoTemplate.find(queryMovies, MovieSearch.class, DB_ALL);
+    
+            List<MovieSearchDTO> results = movies.stream()
+                    .map(movie -> {
+                        if (movie.getPosterPath() != null) {
+                            movie.setPosterPath(baseSmallPosterUrl + movie.getPosterPath());
+                        }
+                        if (movie.getBackdropPath() != null) {
+                            movie.setBackdropPath(originalImageUrl + movie.getBackdropPath());
+                        }
+                        return movieMapper.toMovieSearchDTO(movie);
+                    })
+                    .collect(Collectors.toList());
+
+            return new NavigationResponse(
+                navigationResponse.getRoute(), 
+                Collections.singletonMap("movies", results), 
+                true);
+        }
+
+        if (navigationResponse.getRoute().equals(SEARCH_PAGE)) {
+            //handle in frontend, do not need to handle here
+            return navigationResponse;
+            /*String keyword = (String) navigationResponse.getParams().get("keyword");
+            if (keyword == null || keyword.isEmpty()) {
+                return navigationResponse;
+            }
+
+            Query countQuery = new Query();
+            countQuery.addCriteria(
+                    Criteria.where("title").regex(keyword, "i")
+            );
+
+            long totalResults = mongoTemplate.count(countQuery, MovieSearch.class, DB_ALL);
+            int totalPages = (int) Math.ceil((double) totalResults / MOVIES_PER_PAGE);
+
+            Query searchQuery = new Query();
+            searchQuery.addCriteria(
+                    Criteria.where("title").regex(keyword, "i")
+            );
+            searchQuery.skip(0);
+            searchQuery.limit(MOVIES_PER_PAGE);
+            List<MovieSearch> searchMovies = mongoTemplate.find(searchQuery, MovieSearch.class, DB_ALL);
+
+            List<MovieSearchDTO> results = searchMovies.stream()
+                    .map(movie -> {
+                        if(movie.getPosterPath() != null) {
+                            movie.setPosterPath(baseSmallPosterUrl + movie.getPosterPath());
+                        }
+                        if(movie.getBackdropPath() != null) {
+                            movie.setBackdropPath(originalImageUrl + movie.getBackdropPath());
+                        }
+
+                        return movieMapper.toMovieSearchDTO(movie);
+                    })
+                    .collect(Collectors.toList());
+
+            return new NavigationResponse(
+                navigationResponse.getRoute(), 
+                Collections.singletonMap("movies", results), 
+                true);*/
+        }
+
+        if (navigationResponse.getRoute().equals(HOME_PAGE)
+            || navigationResponse.getRoute().equals(PROFILE_PAGE)
+            || navigationResponse.getRoute().equals(NONE)) {
+                return navigationResponse;
+        }
+        
+        return navigationResponse;
+       // return new NavigationResponse(navigationResponse.getRoute(), navigationResponse.getParams(), false);
+       
+    }
+
+    public List<GenreDTO> getGenresByIds(List<String> genreIds) {
+        Query query = new Query(Criteria.where("_id").in(genreIds));
+        List<Genre> genres = mongoTemplate.find(query, Genre.class, DB_GENRES);
+
+        return genres.stream()
+                .map(movieMapper::toGenreDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<Integer> getGenresTmdbIdByIds(List<String> genreIds) {
+        Query query = new Query(Criteria.where("_id").in(genreIds));
+        List<Genre> genres = mongoTemplate.find(query, Genre.class, DB_GENRES);
+
+        return genres.stream()
+                .map(Genre::getTmdbId)
+                .collect(Collectors.toList());
+    }
+
+    private List<String> extractListIdsFromMapObject(NavigationResponse navigationResponse, String key) {
+        Object IdsObj = navigationResponse.getParams().get(key);
+        if (!(IdsObj instanceof List<?>)) {
+            return null;
+        }
+        List<?> IdsList = (List<?>) IdsObj;
+        return IdsList.stream()
+                .filter(item -> item instanceof String)
+                .map(item -> (String) item)
+                .collect(Collectors.toList());
+    }
 }
