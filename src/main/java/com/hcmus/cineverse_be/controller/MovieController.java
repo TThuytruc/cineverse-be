@@ -136,11 +136,12 @@ public class MovieController {
                     )
             }
     )
+
     @GetMapping("/llm-movie-search")
     public SearchMovieResponse getLLMMovieSearch(
             @RequestParam("collectionName") String collectionName,
             @RequestParam("query") String query,
-            @RequestParam(name = "amount", defaultValue = "1") Integer amount,
+            @RequestParam(name = "amount", defaultValue = "10") Integer amount,
             @RequestParam(name = "threshold", defaultValue = "0.25") Double threshold) {
 
         try {
@@ -153,6 +154,29 @@ public class MovieController {
 
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid parameters in llm movie search.");
+        }
+    }
+
+    @Operation(
+            summary = "Get ai navigation",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            content = @Content(schema = @Schema(implementation = Object.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Invalid ",
+                            content = @Content(schema = @Schema(implementation = BasicResponse.class))
+                    )
+            }
+    )
+    @GetMapping("/ai-navigation")
+    public Object getAiNavigation(@RequestParam("query") String query) {
+        try {
+            return movieService.getAINavigation(query);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid parameters in ai navigation.");
         }
     }
 

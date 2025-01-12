@@ -8,4 +8,5 @@ import lombok.Setter;
 public class GenreDTO {
     private int id;
     private String name;
+    private Integer tmdbId;
 }
