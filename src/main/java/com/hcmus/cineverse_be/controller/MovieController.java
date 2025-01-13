@@ -1,7 +1,9 @@
 package com.hcmus.cineverse_be.controller;
 
+import com.hcmus.cineverse_be.dto.GenreDTO;
 import com.hcmus.cineverse_be.dto.MovieDetailDTO;
 import com.hcmus.cineverse_be.dto.MovieTrendingDTO;
+import com.hcmus.cineverse_be.entity.Genre;
 import com.hcmus.cineverse_be.entity.MovieTrending;
 import com.hcmus.cineverse_be.response.BasicResponse;
 import com.hcmus.cineverse_be.response.PaginationResponse;
@@ -16,6 +18,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.util.List;
+
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -110,12 +115,15 @@ public class MovieController {
     )
     @GetMapping("/search")
     public SearchMovieResponse getSearchMovieResponse(
-        @RequestParam String query,
+        @RequestParam(required = false) String query,
+        @RequestParam(required = false) String fromDate,
+        @RequestParam(required = false) String toDate,
+        @RequestParam(required = false) List<Integer> withGenres,
         @RequestParam(defaultValue = "1") String page) {
 
         try {
             int pageNum = Integer.parseInt(page);
-            return movieService.getSearchMovies(query, pageNum);
+            return movieService.getSearchMovies(query, pageNum, fromDate, toDate, withGenres);
 
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid page: Page must be an integer.");
@@ -180,4 +188,22 @@ public class MovieController {
         }
     }
 
+    @Operation(
+            summary = "Get all genres",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            content = @Content(schema = @Schema(implementation = GenreDTO.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Invalid page/Invalid period",
+                            content = @Content(schema = @Schema(implementation = BasicResponse.class))
+                    )
+            }
+    )
+    @GetMapping("/genres")
+    public List<GenreDTO> getAllGenres() {
+        return movieService.getAllGenres();
+    }
 }
