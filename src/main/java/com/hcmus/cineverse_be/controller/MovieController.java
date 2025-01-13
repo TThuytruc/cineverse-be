@@ -1,13 +1,15 @@
 package com.hcmus.cineverse_be.controller;
 
-import com.hcmus.cineverse_be.dto.GenreDTO;
-import com.hcmus.cineverse_be.dto.LastestTrailersDTO;
-import com.hcmus.cineverse_be.dto.MovieDetailDTO;
-import com.hcmus.cineverse_be.dto.MovieTrendingDTO;
+import com.hcmus.cineverse_be.dto.*;
 import com.hcmus.cineverse_be.entity.Genre;
 import com.hcmus.cineverse_be.entity.MovieTrending;
+import com.hcmus.cineverse_be.entity.Rating;
+import com.hcmus.cineverse_be.request.AddRatingRequest;
+import com.hcmus.cineverse_be.request.RegisterRequest;
+import com.hcmus.cineverse_be.response.BasicDataResponse;
 import com.hcmus.cineverse_be.response.BasicResponse;
 import com.hcmus.cineverse_be.response.PaginationResponse;
+import com.hcmus.cineverse_be.response.auth.ValidationErrorResponse;
 import com.hcmus.cineverse_be.response.movie.SearchMovieResponse;
 import com.hcmus.cineverse_be.response.movie.TrendingMoviesResponse;
 import com.hcmus.cineverse_be.response.retriever.RetrieverResponse;
@@ -17,7 +19,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
@@ -131,6 +136,7 @@ public class MovieController {
         }
     }
 
+
     @Operation(
             summary = "Get llm search movies",
             responses = {
@@ -145,7 +151,6 @@ public class MovieController {
                     )
             }
     )
-
     @GetMapping("/llm-movie-search")
     public SearchMovieResponse getLLMMovieSearch(
             @RequestParam("collectionName") String collectionName,
@@ -165,6 +170,7 @@ public class MovieController {
             throw new IllegalArgumentException("Invalid parameters in llm movie search.");
         }
     }
+
 
     @Operation(
             summary = "Get ai navigation",
@@ -189,6 +195,7 @@ public class MovieController {
         }
     }
 
+
     @Operation(
             summary = "Get all genres",
             responses = {
@@ -208,6 +215,7 @@ public class MovieController {
         return movieService.getAllGenres();
     }
 
+
     @Operation(
             summary = "Get lastest trailer",
             responses = {
@@ -226,6 +234,7 @@ public class MovieController {
     public List<LastestTrailersDTO> getLatestTrailer() {
         return movieService.getLastestTrailers();
     }
+
 
     @Operation(
             summary = "Get popular movies",
@@ -252,5 +261,39 @@ public class MovieController {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid page: Page must be an integer.");
         }
+    }
+
+
+    // Add new rating
+    @Operation(
+            summary = "Add new rating",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Add successfully",
+                            content = @Content(schema = @Schema(implementation = BasicDataResponse.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Movie not found",
+                            content = @Content(schema = @Schema(implementation = BasicResponse.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Invalid rating point (must be in 1 -> 10)",
+                            content = @Content(schema = @Schema(implementation = BasicResponse.class))
+                    )
+            }
+    )
+    @PostMapping("/rating")
+    @SecurityRequirement(name = "BearerAuth")
+    public ResponseEntity<Object> addRating(@RequestBody AddRatingRequest addRatingRequest) {
+        RatingDTO result = movieService.addRating(
+                addRatingRequest.getMovieId(),
+                addRatingRequest.getRating(),
+                addRatingRequest.getReview());
+
+        BasicDataResponse<RatingDTO> response = new BasicDataResponse<>("Add rating successfully.", result);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
