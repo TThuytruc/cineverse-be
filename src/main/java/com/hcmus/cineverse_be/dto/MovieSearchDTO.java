@@ -1,5 +1,7 @@
 package com.hcmus.cineverse_be.dto;
 
+import java.util.List;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,4 +15,5 @@ public class MovieSearchDTO {
     private String releaseDate;
     private double voteAverage;
     private int voteCount;
+    private List<GenreDTO> genres;
 }

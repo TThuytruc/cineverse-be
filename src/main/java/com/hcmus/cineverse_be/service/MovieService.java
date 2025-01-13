@@ -173,22 +173,35 @@ public class MovieService {
         return movieDetailDTO;
     }
 
-    public SearchMovieResponse getSearchMovies(String query, int page) {
+    public SearchMovieResponse getSearchMovies(String query, int page, String fromDate, String toDate, List<Integer> genreIds) {
 
         if (page <= 0) {
             throw new IllegalArgumentException("Invalid page: Page must be greater than 0.");
         }
-        if (query == null || query.isEmpty()) {
-            throw new IllegalArgumentException("There are no movies that matched your query");
-        }
 
         String collectionName = "movies";
 
-        Query countQuery = new Query();
-        countQuery.addCriteria(
-                Criteria.where("title").regex(query, "i")
-        );
+        Criteria criteria = new Criteria();
+        if (query != null && !query.trim().isEmpty()) {
+            criteria.and("title").regex(query.trim(), "i");
+        }
 
+        if (fromDate != null || toDate != null) {
+            Criteria dateCriteria = new Criteria("release_date");
+            if (fromDate != null) {
+                dateCriteria.gte(fromDate); // greater than or equal
+            }
+            if (toDate != null) {
+                dateCriteria.lte(toDate); // less than or equal
+            }
+            criteria.andOperator(dateCriteria);
+        }
+
+        if (genreIds != null && !genreIds.isEmpty()) {
+            criteria.and("genres_id").in(genreIds);
+        }
+
+        Query countQuery = new Query().addCriteria(criteria);
         long totalResults = mongoTemplate.count(countQuery, MovieSearch.class, collectionName);
         int totalPages = (int) Math.ceil((double) totalResults / MOVIES_PER_PAGE);
 
@@ -197,10 +210,7 @@ public class MovieService {
         }
 
 
-        Query searchQuery = new Query();
-        searchQuery.addCriteria(
-                Criteria.where("title").regex(query, "i")
-        );
+        Query searchQuery = new Query().addCriteria(criteria);
         searchQuery.skip((long) (page - 1) * MOVIES_PER_PAGE);
         searchQuery.limit(MOVIES_PER_PAGE);
         List<MovieSearch> searchMovies = mongoTemplate.find(searchQuery, MovieSearch.class, collectionName);
@@ -460,6 +470,14 @@ public class MovieService {
         return IdsList.stream()
                 .filter(item -> item instanceof String)
                 .map(item -> (String) item)
+                .collect(Collectors.toList());
+    }
+
+    public List<GenreDTO> getAllGenres() {
+        List<Genre> genres = mongoTemplate.findAll(Genre.class, DB_GENRES);
+
+        return genres.stream()
+                .map(movieMapper::toGenreDTO)
                 .collect(Collectors.toList());
     }
 }

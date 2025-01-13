@@ -1,5 +1,7 @@
 package com.hcmus.cineverse_be.entity;
 
+import java.util.List;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Field;
 import lombok.Getter;
@@ -30,4 +32,6 @@ public class MovieSearch {
 
     @Field("vote_count")
     private int voteCount;
+
+    private List<Genre> genres;
 }
