@@ -1,6 +1,7 @@
 package com.hcmus.cineverse_be.controller;
 
 import com.hcmus.cineverse_be.dto.GenreDTO;
+import com.hcmus.cineverse_be.dto.LastestTrailersDTO;
 import com.hcmus.cineverse_be.dto.MovieDetailDTO;
 import com.hcmus.cineverse_be.dto.MovieTrendingDTO;
 import com.hcmus.cineverse_be.entity.Genre;
@@ -205,5 +206,51 @@ public class MovieController {
     @GetMapping("/genres")
     public List<GenreDTO> getAllGenres() {
         return movieService.getAllGenres();
+    }
+
+    @Operation(
+            summary = "Get lastest trailer",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            content = @Content(schema = @Schema(implementation = GenreDTO.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Invalid page/Invalid period",
+                            content = @Content(schema = @Schema(implementation = BasicResponse.class))
+                    )
+            }
+    )
+    @GetMapping("/latest-trailer")
+    public List<LastestTrailersDTO> getLatestTrailer() {
+        return movieService.getLastestTrailers();
+    }
+
+    @Operation(
+            summary = "Get popular movies",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            content = @Content(schema = @Schema(implementation = TrendingMoviesResponse.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Invalid page/Invalid period",
+                            content = @Content(schema = @Schema(implementation = BasicResponse.class))
+                    )
+            }
+    )
+    @GetMapping("/popular")
+    public List<MovieTrendingDTO> getPopularMovies(
+            @RequestParam(defaultValue = "1") String page) {
+
+        try {
+            int pageNum = Integer.parseInt(page);
+            return movieService.getMoviePopular(pageNum);
+
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid page: Page must be an integer.");
+        }
     }
 }
