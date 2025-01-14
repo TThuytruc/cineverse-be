@@ -17,6 +17,7 @@ public class MovieDetailDTO {
     private double voteAverage;
     private int voteCount;
     private List<GenreDTO> genres;
+    private List<Integer> genreIds;
     private List<CastDTO> cast;
     private List<CrewDTO> crew;
     private String status;

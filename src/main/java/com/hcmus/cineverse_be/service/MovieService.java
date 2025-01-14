@@ -543,6 +543,19 @@ public class MovieService {
         return results;
     }
 
+    public SimilarMoviesDTO getSimilarMovies(long movieId) {
+
+        Query query = new Query(Criteria.where("tmdb_id").is(movieId));
+        SimilarMovies similarMovies = mongoTemplate.findOne(query, SimilarMovies.class, "similar");
+
+        if (similarMovies == null) {
+            throw new ResourceNotFoundException("Similar movies not found.");
+        }
+
+        SimilarMoviesDTO similarMoviesDTO = movieMapper.toSimilarMoviesDTO(similarMovies);
+        return similarMoviesDTO;
+    }
+
     public RatingDTO addRating(long movieId, int rating, String review) {
 
         // Check input

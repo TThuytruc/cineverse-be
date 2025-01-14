@@ -7,6 +7,9 @@ import com.hcmus.cineverse_be.entity.Rating;
 import com.hcmus.cineverse_be.request.AddRatingRequest;
 import com.hcmus.cineverse_be.request.RegisterRequest;
 import com.hcmus.cineverse_be.response.BasicDataResponse;
+import com.hcmus.cineverse_be.entity.Genre;
+import com.hcmus.cineverse_be.entity.MovieTrending;
+import com.hcmus.cineverse_be.entity.SimilarMovies;
 import com.hcmus.cineverse_be.response.BasicResponse;
 import com.hcmus.cineverse_be.response.PaginationResponse;
 import com.hcmus.cineverse_be.response.auth.ValidationErrorResponse;
@@ -23,7 +26,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
 
@@ -263,6 +265,29 @@ public class MovieController {
         }
     }
 
+    @Operation(
+            summary = "Get similar movies",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            content = @Content(schema = @Schema(implementation = TrendingMoviesResponse.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Invalid page/Invalid period",
+                            content = @Content(schema = @Schema(implementation = BasicResponse.class))
+                    )
+            }
+    )
+    @GetMapping("/{id}/similar")
+    public SimilarMoviesDTO getSimilarMovies(@PathVariable String id) {
+        try {
+            long movieId = Long.parseLong(id);
+            return movieService.getSimilarMovies(movieId);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid ID: Movie ID must be an integer.");
+        }
+    }
 
     // Add new rating
     @Operation(
