@@ -1,11 +1,13 @@
 package com.hcmus.cineverse_be.client;
 
+import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.FirebaseAuth;
 import com.hcmus.cineverse_be.config.FirebaseConfigurationProperties;
 import com.hcmus.cineverse_be.exception.FirebaseAuthenticationException;
 import com.hcmus.cineverse_be.response.auth.RefreshTokenResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -21,6 +23,9 @@ public class FirebaseAuthClient {
     private final FirebaseConfigurationProperties firebaseConfigurationProperties;
     private final FirebaseAuth firebaseAuth;
     private static final String REFRESH_TOKEN_URL = "https://securetoken.googleapis.com/v1/token";
+
+    @Value("${domain.auth.callback-url}")
+    private String CALLBACK_URL;
 
     public RefreshTokenResponse refreshAccessToken(@NonNull final String refreshToken) {
         final var webApiKey = firebaseConfigurationProperties.getFirebase().getWebApiKey();
@@ -50,6 +55,26 @@ public class FirebaseAuthClient {
         } catch (HttpClientErrorException exception) {
             System.err.println("Error refreshing token: " + exception.getResponseBodyAsString());
             throw new FirebaseAuthenticationException("Failed to refresh token.");
+        }
+    }
+
+    public String generateEmailVerification(@NonNull final String email) {
+        try {
+            ActionCodeSettings actionCodeSettings = ActionCodeSettings.builder()
+                    .setUrl(CALLBACK_URL)
+                    .setHandleCodeInApp(true)
+                    .setIosBundleId("com.example.ios")
+                    .setAndroidPackageName("com.example.android")
+                    .setAndroidInstallApp(true)
+                    .setAndroidMinimumVersion("12")
+                    .setDynamicLinkDomain("example.page.link")
+                    .build();
+
+            String link = firebaseAuth.generateEmailVerificationLink(email);
+
+            return link;
+        } catch (Exception e) {
+            throw new FirebaseAuthenticationException("Failed to generate verification email.");
         }
     }
 }
