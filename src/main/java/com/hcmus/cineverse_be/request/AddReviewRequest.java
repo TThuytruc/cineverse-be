@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class AddRatingRequest {
+public class AddReviewRequest {
     private long movieId;
-    private int rating;
+    private String review;
 }

@@ -1,24 +1,15 @@
 package com.hcmus.cineverse_be.dto;
 
-import com.google.auto.value.AutoValue.Builder;
+import lombok.Getter;
+import lombok.Setter;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.FieldDefaults;
+import java.time.LocalDateTime;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@Getter
+@Setter
 public class ReviewDTO {
-    AuthorDetailsDTO authorDetails;
-    String author;
-    String content;
-    String createdAt;
-    String id;
-    String updatedAt;
-    String url;
+    private String userId;
+    private long movieId;
+    private LocalDateTime createdAt;
+    private String review;
 }

@@ -1,35 +1,27 @@
 package com.hcmus.cineverse_be.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.FieldDefaults;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import static lombok.AccessLevel.PRIVATE;
+import java.time.LocalDateTime;
 
-
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@FieldDefaults(level = PRIVATE)
+@Getter
+@Setter
 public class Review {
-    String author;
+    @Id
+    private String _id;
 
-    @Field("author_details")
-    AuthorDetails authorDetails;
+    @Field("user_id")
+    private String userId;
 
-    String content;
+    @Field("movie_id")
+    private long movieId;
 
-    @Field("created_at")
-    String createdAt;
-    @Field("updated_at")
-    String updatedAt;
+    @Field("create_at")
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Field("id")
-    String id;
-    String url;
-
+    private String review;
 }
