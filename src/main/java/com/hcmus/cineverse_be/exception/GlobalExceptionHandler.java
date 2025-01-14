@@ -53,6 +53,15 @@ public class GlobalExceptionHandler {
                 .body(new ValidationErrorResponse(e.getMessage(), e.getErrors()));
     }
 
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<Object> handleConflictException(ConflictException e) {
+        System.out.println(e.getMessage());
+        System.out.println(e.getStackTrace());
+        System.out.println(e.getCause());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new BasicResponse(e.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleGlobalException(Exception e) {
         System.out.println(e.getMessage());

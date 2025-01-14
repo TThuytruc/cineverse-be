@@ -1,5 +1,6 @@
 package com.hcmus.cineverse_be.entity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,11 +26,11 @@ public class Review {
 
     @Field("created_at")
     String createdAt;
-    @Field("updated_at")
+    @Field(name = "updated_at", write = Field.Write.ALWAYS)
     String updatedAt;
 
     @Field("id")
     String id;
+    @Field(write = Field.Write.ALWAYS)
     String url;
-
 }

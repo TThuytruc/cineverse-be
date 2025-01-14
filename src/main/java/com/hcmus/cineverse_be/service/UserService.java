@@ -1,10 +1,9 @@
 package com.hcmus.cineverse_be.service;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.UserRecord;
+import com.google.firebase.auth.*;
 import com.hcmus.cineverse_be.client.FirebaseAuthClient;
 import com.hcmus.cineverse_be.entity.User;
+import com.hcmus.cineverse_be.exception.FirebaseAuthenticationException;
 import com.hcmus.cineverse_be.exception.ValidationException;
 import com.hcmus.cineverse_be.response.auth.RefreshTokenResponse;
 import com.hcmus.cineverse_be.validation.UserValidation;
@@ -13,8 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -122,7 +123,61 @@ public class UserService {
         }
     }
 
+    private String getUsernameByUid(String uid) {
+        try {
+            Query query = new Query(Criteria.where("uid").is(uid));
+            User user = mongoTemplate.findOne(query, User.class);
+            return user != null ? user.getUsername() : null;
+        } catch (Exception e) {
+            throw new RuntimeException("An error occurred while getting username.", e);
+        }
+    }
+
+
     public RefreshTokenResponse refreshAccessToken(@NonNull final String refreshToken) {
         return firebaseAuthClient.refreshAccessToken(refreshToken);
+    }
+
+    public boolean isGoogleUser() {
+        String uid = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserRecord userRecord = null;
+        try {
+            userRecord = FirebaseAuth.getInstance().getUser(uid);
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException("An error occurred while getting user record.", e);
+        }
+
+        for (UserInfo provider : userRecord.getProviderData()) {
+            if ("google.com".equals(provider.getProviderId())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public String getUserName() {
+
+        String uid = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserRecord userRecord = null;
+        try {
+            userRecord = FirebaseAuth.getInstance().getUser(uid);
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException("An error occurred while getting user record.", e);
+        }
+
+        boolean isGoogleUser = false;
+        for (UserInfo provider : userRecord.getProviderData()) {
+            if ("google.com".equals(provider.getProviderId())) {
+                isGoogleUser = true;
+                break;
+            }
+        }
+
+        if (isGoogleUser) {
+            return userRecord.getDisplayName();
+        } else {
+            return getUsernameByUid(uid);
+        }
     }
 }

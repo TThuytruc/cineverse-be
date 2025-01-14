@@ -23,6 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,7 +41,7 @@ public class MovieService {
     private final String DB_TRENDING_DAY = "movies_trending_day";
     private final String DB_TRENDING_WEEK = "movies_trending_week";
     private final String DB_GENRES = "movie_genres";
-    private final String DB_RATINGS = "ratings";
+    private final String DB_RATINGS = "user_ratings";
 
     private final String CAST_PAGE = "CAST_PAGE";
     private final String MOVIE_PAGE = "MOVIE_PAGE";
@@ -49,8 +50,6 @@ public class MovieService {
     private final String HOME_PAGE = "HOME_PAGE";
     private final String PROFILE_PAGE = "PROFILE_PAGE";
     private final String NONE  = "NONE";
-
-    private WebClient webClient;
 
     @Value("${tmdb.api.base-image-url}")
     private String baseImageUrl;
@@ -61,6 +60,12 @@ public class MovieService {
     private String baseSmallPosterUrl;
     private String baseLargePosterUrl;
     private String baseSmallProfileUrl;
+
+
+    private WebClient webClient;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private MovieMapper movieMapper;
@@ -558,7 +563,7 @@ public class MovieService {
         }
 
 
-        // Update movie detail
+        // Update movie vote count & vote average
         double currentTotalRating = movieDetail.getVoteAverage() * movieDetail.getVoteCount();
         int newVoteCount = movieDetail.getVoteCount() + 1;
         double newVoteAverage = (currentTotalRating + rating) / newVoteCount;
@@ -583,8 +588,47 @@ public class MovieService {
         newRating.setRating(rating);
         newRating.setReview(review);
 //            newRating.setCreatedAt(LocalDateTime.now());
-        mongoTemplate.save(newRating, DB_RATINGS);
+        Rating savedRating = mongoTemplate.save(newRating, DB_RATINGS);
 
-        return movieMapper.toRatingDTO(newRating);
+
+        // Update movie review
+        AuthorDetails authorDetails = new AuthorDetails();
+        if (userService.isGoogleUser()) {
+            authorDetails.setName(userService.getUserName());
+            authorDetails.setUsername(null);
+        }
+        else {
+            authorDetails.setUsername(userService.getUserName());
+            authorDetails.setName(null);
+        }
+        authorDetails.setAvatarPath(null);
+        authorDetails.setRating(rating);
+
+        Review newReview = new Review();
+        newReview.setAuthor(userService.getUserName());
+        newReview.setAuthorDetails(authorDetails);
+        newReview.setContent(review);
+        newReview.setCreatedAt(LocalDateTime.now().toString());
+        newReview.setUpdatedAt(null);
+        newReview.setId(savedRating.get_id());
+        newReview.setUrl(null);
+
+        Update updateReview = new Update();
+        updateReview.push("reviews", newReview);
+
+//        updateReview.set("reviews.$.author_details.avatar_path", null);
+//        updateReview.set("reviews.$.updated_at", null);
+//        updateReview.set("reviews.$.url", null);
+//
+//        if (userService.isGoogleUser()) {
+//            updateReview.set("reviews.$.author_details.username", null);
+//        }
+//        else {
+//            updateReview.set("reviews.$.author_details.name", null);
+//        }
+
+        mongoTemplate.updateFirst(query, updateReview, MovieDetail.class, DB_ALL);
+
+        return movieMapper.toRatingDTO(savedRating);
     }
 }
