@@ -8,7 +8,6 @@ import com.hcmus.cineverse_be.response.AIApiResponse;
 import com.hcmus.cineverse_be.response.movie.SearchMovieResponse;
 import com.hcmus.cineverse_be.response.movie.TrendingMoviesResponse;
 import com.hcmus.cineverse_be.response.navigate.NavigationResponse;
-import com.hcmus.cineverse_be.response.rating.RatingsResponse;
 import com.hcmus.cineverse_be.response.retriever.RetrieverResponse;
 import jakarta.annotation.PostConstruct;
 

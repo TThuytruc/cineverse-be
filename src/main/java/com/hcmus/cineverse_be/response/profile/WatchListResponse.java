@@ -1,6 +1,5 @@
-package com.hcmus.cineverse_be.response.rating;
+package com.hcmus.cineverse_be.response.profile;
 
-import com.hcmus.cineverse_be.dto.RatingDTO;
 import com.hcmus.cineverse_be.dto.WatchListDTO;
 import com.hcmus.cineverse_be.response.PaginationResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
