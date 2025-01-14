@@ -53,10 +53,9 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<Object> register(@RequestBody RegisterRequest userRequest) {
         userService.create(userRequest.getUsername(), userRequest.getEmail(), userRequest.getPassword());
-        BasicResponse response = new BasicResponse("User registered successfully.");
+        BasicResponse response = new BasicResponse("User registered successfully! Check your email to activate your account.");
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
    }
-
 
     // Verify user token
     @Operation(
@@ -122,5 +121,10 @@ public class UserController {
         String refreshToken = body.get("refreshToken");
         RefreshTokenResponse response = userService.refreshAccessToken(refreshToken);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/verify-email-callback")
+    public void emailVerificationCallback(@RequestParam String oobCode) {
+        userService.verifyEmailCallback(oobCode);
     }
 }

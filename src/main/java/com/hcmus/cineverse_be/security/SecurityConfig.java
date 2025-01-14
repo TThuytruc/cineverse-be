@@ -14,25 +14,28 @@ public class SecurityConfig {
 
     @Bean
     @Order(1)
-    public SecurityFilterChain publicEndpoints(HttpSecurity http) throws Exception {
+    public SecurityFilterChain privateEndpoints(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .securityMatcher("/public", "/user/**", "/movie/**")
+                .securityMatcher("/private",
+                        "/movie/rating-point",
+                        "/movie/review",
+                        "/profile/**")
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
-                );
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(new FirebaseAuthenticationFilter(), AbstractPreAuthenticatedProcessingFilter.class);
 
         return http.build();
     }
 
     @Bean
     @Order(2)
-    public SecurityFilterChain privateEndpoints(HttpSecurity http) throws Exception {
+    public SecurityFilterChain publicEndpoints(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .securityMatcher("/private")
+                .securityMatcher("/public", "/user/**", "/movie/**")
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(new FirebaseAuthenticationFilter(), AbstractPreAuthenticatedProcessingFilter.class);
+                        .anyRequest().permitAll()
+                );
 
         return http.build();
     }

@@ -13,6 +13,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(FirebaseAuthenticationException.class)
     public ResponseEntity<Object> handleFirebaseAuthException(FirebaseAuthenticationException e) {
+        System.out.println(e.getMessage());
+        System.out.println(e.getStackTrace());
+        System.out.println(e.getCause());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new BasicResponse(e.getMessage()));
     }
@@ -25,27 +28,45 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Object> handleResourceNotFoundException(ResourceNotFoundException e) {
+        System.out.println(e.getMessage());
+        System.out.println(e.getStackTrace());
+        System.out.println(e.getCause());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new BasicResponse(e.getMessage()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Object> handleIllegalArgException(IllegalArgumentException e) {
+        System.out.println(e.getMessage());
+        System.out.println(e.getStackTrace());
+        System.out.println(e.getCause());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new BasicResponse(e.getMessage()));
     }
 
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<Object> handleValidationException(ValidationException e) {
+        System.out.println(e.getMessage());
+        System.out.println(e.getStackTrace());
+        System.out.println(e.getCause());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ValidationErrorResponse(e.getMessage(), e.getErrors()));
     }
 
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<Object> handleConflictException(ConflictException e) {
+        System.out.println(e.getMessage());
+        System.out.println(e.getStackTrace());
+        System.out.println(e.getCause());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new BasicResponse(e.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleGlobalException(Exception e) {
-//        System.out.println(e.getMessage());
-//        System.out.println(e.getStackTrace());
-//        System.out.println(e.getCause());
+        System.out.println(e.getMessage());
+        System.out.println(e.getStackTrace());
+        System.out.println(e.getCause());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new BasicResponse("Internal Server Error"));
     }
