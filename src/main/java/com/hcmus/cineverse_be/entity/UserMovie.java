@@ -10,18 +10,22 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-public class Review {
+public class UserMovie {
     @Id
     private String _id;
 
     @Field("user_id")
     private String userId;
 
-    @Field("movie_id")
-    private long movieId;
+    @DBRef
+    private MovieProfile movie;
 
-    @Field("create_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Field(write = Field.Write.ALWAYS)
+    private Integer rating;
 
-    private String review;
+    @Field(name="is_favorite", write = Field.Write.ALWAYS)
+    private boolean isFavorite;
+
+    @Field(name="in_watchlist", write = Field.Write.ALWAYS)
+    private boolean inWatchList;
 }

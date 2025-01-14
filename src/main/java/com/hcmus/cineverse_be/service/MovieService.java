@@ -1,20 +1,16 @@
 package com.hcmus.cineverse_be.service;
 
 import com.hcmus.cineverse_be.dto.*;
-import com.hcmus.cineverse_be.entity.Genre;
-import com.hcmus.cineverse_be.entity.LastestTrailers;
-import com.hcmus.cineverse_be.entity.MovieDetail;
-import com.hcmus.cineverse_be.entity.MovieSearch;
-import com.hcmus.cineverse_be.entity.MovieTrending;
-import com.hcmus.cineverse_be.entity.SimilarMovies;
-import com.hcmus.cineverse_be.entity.VideoDetails;
+import com.hcmus.cineverse_be.entity.*;
 import com.hcmus.cineverse_be.exception.ResourceNotFoundException;
 import com.hcmus.cineverse_be.mapper.MovieMapper;
+import com.hcmus.cineverse_be.mapper.ProfileMapper;
 import com.hcmus.cineverse_be.response.AIApiResponse;
 import com.hcmus.cineverse_be.response.movie.SearchMovieResponse;
 import com.hcmus.cineverse_be.response.movie.TrendingMoviesResponse;
 import com.hcmus.cineverse_be.response.navigate.NavigationResponse;
 import com.hcmus.cineverse_be.response.retriever.RetrieverResponse;
+import com.mongodb.client.result.UpdateResult;
 import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +19,12 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,6 +42,9 @@ public class MovieService {
     private final String DB_TRENDING_DAY = "movies_trending_day";
     private final String DB_TRENDING_WEEK = "movies_trending_week";
     private final String DB_GENRES = "movie_genres";
+//    private final String DB_RATINGS = "user_ratings";
+    private final String DB_USER_MOVIE = "users_movies";
+    private final String DB_REVIEW = "users_reviews";
 
     private final String CAST_PAGE = "CAST_PAGE";
     private final String MOVIE_PAGE = "MOVIE_PAGE";
@@ -51,8 +53,6 @@ public class MovieService {
     private final String HOME_PAGE = "HOME_PAGE";
     private final String PROFILE_PAGE = "PROFILE_PAGE";
     private final String NONE  = "NONE";
-
-    private WebClient webClient;
 
     @Value("${tmdb.api.base-image-url}")
     private String baseImageUrl;
@@ -64,8 +64,17 @@ public class MovieService {
     private String baseLargePosterUrl;
     private String baseSmallProfileUrl;
 
+
+    private WebClient webClient;
+
+    @Autowired
+    private UserService userService;
+
     @Autowired
     private MovieMapper movieMapper;
+
+    @Autowired
+    private ProfileMapper profileMapper;
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -164,7 +173,7 @@ public class MovieService {
             });
         }
 
-        List<ReviewDTO> listReviews = movieDetailDTO.getReviews();
+        List<ReviewDetailDTO> listReviews = movieDetailDTO.getReviews();
         if (listReviews != null) {
             listReviews.forEach(review -> {
                 if(review.getAuthorDetails().getAvatarPath() != null) {
@@ -557,5 +566,105 @@ public class MovieService {
         SimilarMoviesDTO similarMoviesDTO = movieMapper.toSimilarMoviesDTO(similarMovies);
         return similarMoviesDTO;
     }
+    
+    public UserMovieDTO addRating(long movieId, int rating) {
+        // Check input
+        Query query = new Query(Criteria.where("id").is(movieId));
+        MovieDetail movieDetail = mongoTemplate.findOne(query, MovieDetail.class, DB_ALL);
 
+        if (movieDetail == null) {
+            throw new ResourceNotFoundException("Movie not found.");
+        }
+
+        if (rating < 0 || rating > 10) {
+            throw new IllegalArgumentException("Invalid rating point: Rating point must be between 1 and 10.");
+        }
+
+        // Update movie vote count & vote average
+        double currentTotalRating = movieDetail.getVoteAverage() * movieDetail.getVoteCount();
+        int newVoteCount = movieDetail.getVoteCount() + 1;
+        double newVoteAverage = (currentTotalRating + rating) / newVoteCount;
+
+        Update update = new Update();
+        update.set("vote_count", newVoteCount);
+        update.set("vote_average", newVoteAverage);
+        mongoTemplate.updateFirst(query, update, MovieDetail.class, DB_ALL);
+
+        // Add rating
+        MovieProfile movie = mongoTemplate.findOne(query, MovieProfile.class, DB_ALL);
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String userMovieId = userId + "_" + movieId;
+
+        Query queryAdd = new Query(Criteria.where("_id").is(userMovieId));
+        Update updateAdd = new Update()
+                .set("user_id", userId)
+                .set("movie", movie)
+                .set("rating", rating)
+                .setOnInsert("in_watchlist", false)
+                .setOnInsert("is_favorite", false);
+
+        mongoTemplate.upsert(queryAdd, updateAdd, UserMovie.class, DB_USER_MOVIE);
+        UserMovie result = mongoTemplate.findOne(queryAdd, UserMovie.class, DB_USER_MOVIE);
+        return profileMapper.toUserMovieDTO(result);
+    }
+
+    public ReviewDTO addReview(long movieId, String review) {
+
+        // Check input
+        Query queryCheck = new Query(Criteria.where("id").is(movieId));
+        MovieDetail movieDetail = mongoTemplate.findOne(queryCheck, MovieDetail.class, DB_ALL);
+
+        if (movieDetail == null) {
+            throw new ResourceNotFoundException("Movie not found.");
+        }
+
+        // Add review
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Review newReview = new Review();
+        newReview.setUserId(userId);
+        newReview.setMovieId(movieId);
+        newReview.setReview(review);
+
+        Review savedReview = mongoTemplate.save(newReview, DB_REVIEW);
+
+
+        // Update movie review
+        AuthorDetails authorDetails = new AuthorDetails();
+        if (userService.isGoogleUser()) {
+            authorDetails.setName(userService.getUserName());
+            authorDetails.setUsername(null);
+        }
+        else {
+            authorDetails.setUsername(userService.getUserName());
+            authorDetails.setName(null);
+        }
+        authorDetails.setAvatarPath(null);
+
+        String userMovieId = userId + "_" + movieId;
+        Query query = new Query(Criteria.where("_id").is(userMovieId));
+        UserMovie userMovie = mongoTemplate.findOne(query, UserMovie.class, DB_USER_MOVIE);
+        if (userMovie == null || userMovie.getRating() == null) {
+            authorDetails.setRating(null);
+        }
+        else {
+            authorDetails.setRating(userMovie.getRating());
+        }
+
+        ReviewDetail newReviewDetail = new ReviewDetail();
+        newReviewDetail.setAuthor(userService.getUserName());
+        newReviewDetail.setAuthorDetails(authorDetails);
+        newReviewDetail.setContent(review);
+        newReviewDetail.setCreatedAt(LocalDateTime.now().toString());
+        newReviewDetail.setUpdatedAt(null);
+        newReviewDetail.setId(savedReview.get_id());
+        newReviewDetail.setUrl(null);
+
+        Update updateReview = new Update();
+        updateReview.push("reviews", newReviewDetail);
+
+        mongoTemplate.updateFirst(query, updateReview, MovieDetail.class, DB_ALL);
+
+        return movieMapper.toReviewDTO(savedReview);
+    }
 }

@@ -3,13 +3,15 @@ package com.hcmus.cineverse_be.entity;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.List;
 
 @Getter
 @Setter
-public class MovieDetail {
+@Document(collection = "movies")
+public class MovieProfile {
     @Id
     private String _id;
 
@@ -34,23 +36,8 @@ public class MovieDetail {
 
     private List<Genre> genres;
 
-    @Field("genre_ids")
-    private List<Integer> genreIds;
-
-    @Field("credits.cast")
-    private List<Cast> cast;
-
-    @Field("credits.crew")
-    private List<Crew> crew;
-
-    @Field("reviews")
-    private List<ReviewDetail> reviewDetails;
-
     private String status;
 
     @Field("release_date")
     private String releaseDate;
-
-    private long budget;
-    private long revenue;
 }

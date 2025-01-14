@@ -10,6 +10,7 @@ public interface MovieMapper {
     MovieTrendingDTO toMovieTrendingDTO(MovieTrending movie);
     MovieDetailDTO toMovieDetailDTO(MovieDetail movieDetail);
     MovieSearchDTO toMovieSearchDTO(MovieSearch movieSearch);
+    MovieProfileDTO toMovieProfileDTO(MovieProfile movieProfile);
     LastestTrailersDTO toLastestTrailersDTO(LastestTrailers lastestTrailers);
     SimilarMoviesDTO toSimilarMoviesDTO(SimilarMovies similarMovies);
     GenreDTO toGenreDTO(Genre genre);
@@ -17,6 +18,7 @@ public interface MovieMapper {
     CrewDTO toCrewDTO(Crew crew);
 
     @Mapping(source = "authorDetails", target = "authorDetails")
-    ReviewDTO toReviewDTO(Review review);
+    ReviewDetailDTO toReviewDetailDTO(ReviewDetail reviewDetail);
     AuthorDetailsDTO toAuthorDetailsDTO(AuthorDetails authorDetails);
+    ReviewDTO toReviewDTO(Review review);
 }
