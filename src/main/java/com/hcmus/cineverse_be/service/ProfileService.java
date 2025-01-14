@@ -318,4 +318,27 @@ public class ProfileService {
 
         mongoTemplate.updateFirst(favoriteQuery, updateDelete, UserMovie.class, DB_USER_MOVIE);
     }
+
+    public UserMovieDTO getMovieDetailsByMovieIdAndUserId(long movieId) {
+        // Get current user
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        System.out.println("movieId: " + movieId);
+
+        Query movieQuery = new Query(Criteria.where("id").is(movieId));
+        MovieProfile movie = mongoTemplate.findOne(movieQuery, MovieProfile.class, DB_ALL);
+
+        if (movie == null) {
+            throw new ResourceNotFoundException("Movie not found.");
+        }
+
+
+        Query query = new Query(Criteria.where("movie").is(movie).and("user_id").is(userId));
+        UserMovie userMovie = mongoTemplate.findOne(query, UserMovie.class, DB_USER_MOVIE);
+
+        if (userMovie == null) {
+            throw new ResourceNotFoundException("Movie not found.");
+        }
+        return profileMapper.toUserMovieDTO(userMovie);
+    }
 }
