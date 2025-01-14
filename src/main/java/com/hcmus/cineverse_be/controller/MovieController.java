@@ -1,15 +1,10 @@
 package com.hcmus.cineverse_be.controller;
 
 import com.hcmus.cineverse_be.dto.*;
-import com.hcmus.cineverse_be.entity.Genre;
-import com.hcmus.cineverse_be.entity.MovieTrending;
-import com.hcmus.cineverse_be.entity.Rating;
 import com.hcmus.cineverse_be.request.AddRatingRequest;
-import com.hcmus.cineverse_be.request.RegisterRequest;
+import com.hcmus.cineverse_be.request.AddReviewRequest;
 import com.hcmus.cineverse_be.response.BasicDataResponse;
 import com.hcmus.cineverse_be.response.BasicResponse;
-import com.hcmus.cineverse_be.response.PaginationResponse;
-import com.hcmus.cineverse_be.response.auth.ValidationErrorResponse;
 import com.hcmus.cineverse_be.response.movie.SearchMovieResponse;
 import com.hcmus.cineverse_be.response.movie.TrendingMoviesResponse;
 import com.hcmus.cineverse_be.response.retriever.RetrieverResponse;
@@ -264,9 +259,9 @@ public class MovieController {
     }
 
 
-    // Add new rating
+    // Add new rating point
     @Operation(
-            summary = "Add new rating",
+            summary = "Add new rating point",
             responses = {
                     @ApiResponse(
                             responseCode = "201",
@@ -285,15 +280,41 @@ public class MovieController {
                     )
             }
     )
-    @PostMapping("/rating")
+    @PostMapping("/rating-point")
     @SecurityRequirement(name = "BearerAuth")
     public ResponseEntity<Object> addRating(@RequestBody AddRatingRequest addRatingRequest) {
-        RatingDTO result = movieService.addRating(
+        UserMovieDTO result = movieService.addRating(
                 addRatingRequest.getMovieId(),
-                addRatingRequest.getRating(),
-                addRatingRequest.getReview());
+                addRatingRequest.getRating());
 
-        BasicDataResponse<RatingDTO> response = new BasicDataResponse<>("Add rating successfully.", result);
+        BasicDataResponse<UserMovieDTO> response = new BasicDataResponse<>("Add rating point successfully.", result);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // Add new review
+    @Operation(
+            summary = "Add new review",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Add successfully",
+                            content = @Content(schema = @Schema(implementation = BasicDataResponse.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Movie not found",
+                            content = @Content(schema = @Schema(implementation = BasicResponse.class))
+                    )
+            }
+    )
+    @PostMapping("/review")
+    @SecurityRequirement(name = "BearerAuth")
+    public ResponseEntity<Object> addReview(@RequestBody AddReviewRequest addReviewRequest) {
+        ReviewDTO result = movieService.addReview(
+                addReviewRequest.getMovieId(),
+                addReviewRequest.getReview());
+
+        BasicDataResponse<ReviewDTO> response = new BasicDataResponse<>("Add review successfully.", result);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

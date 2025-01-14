@@ -1,7 +1,6 @@
 package com.hcmus.cineverse_be.controller;
 
-import com.hcmus.cineverse_be.dto.FavoriteDTO;
-import com.hcmus.cineverse_be.dto.WatchListDTO;
+import com.hcmus.cineverse_be.dto.UserMovieDTO;
 import com.hcmus.cineverse_be.request.AddFavoriteRequest;
 import com.hcmus.cineverse_be.request.AddWatchListRequest;
 import com.hcmus.cineverse_be.response.BasicDataResponse;
@@ -113,9 +112,9 @@ public class ProfileController {
     @PostMapping("/watchlist")
     @SecurityRequirement(name = "BearerAuth")
     public ResponseEntity<Object> addWatchList(@RequestBody AddWatchListRequest addWatchListRequest) {
-        WatchListDTO result = profileService.addWatchList(addWatchListRequest.getMovieId());
+        UserMovieDTO result = profileService.addWatchList(addWatchListRequest.getMovieId());
 
-        BasicDataResponse<WatchListDTO> response = new BasicDataResponse<>("Add to watchlist successfully.", result);
+        BasicDataResponse<UserMovieDTO> response = new BasicDataResponse<>("Add to watchlist successfully.", result);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -200,9 +199,9 @@ public class ProfileController {
     @PostMapping("/favorite")
     @SecurityRequirement(name = "BearerAuth")
     public ResponseEntity<Object> addFavorite(@RequestBody AddFavoriteRequest addFavoriteRequest) {
-        FavoriteDTO result = profileService.addFavorite(addFavoriteRequest.getMovieId());
+        UserMovieDTO result = profileService.addFavorite(addFavoriteRequest.getMovieId());
 
-        BasicDataResponse<FavoriteDTO> response = new BasicDataResponse<>("Add to favorite list successfully.", result);
+        BasicDataResponse<UserMovieDTO> response = new BasicDataResponse<>("Add to favorite list successfully.", result);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

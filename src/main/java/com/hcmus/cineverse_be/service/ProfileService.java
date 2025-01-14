@@ -1,12 +1,7 @@
 package com.hcmus.cineverse_be.service;
 
-import com.hcmus.cineverse_be.dto.FavoriteDTO;
-import com.hcmus.cineverse_be.dto.RatingDTO;
-import com.hcmus.cineverse_be.dto.WatchListDTO;
-import com.hcmus.cineverse_be.entity.Favorite;
-import com.hcmus.cineverse_be.entity.MovieProfile;
-import com.hcmus.cineverse_be.entity.Rating;
-import com.hcmus.cineverse_be.entity.WatchList;
+import com.hcmus.cineverse_be.dto.*;
+import com.hcmus.cineverse_be.entity.*;
 import com.hcmus.cineverse_be.exception.ConflictException;
 import com.hcmus.cineverse_be.exception.ResourceNotFoundException;
 import com.hcmus.cineverse_be.mapper.MovieMapper;
@@ -18,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +31,8 @@ public class ProfileService {
     private final String DB_WATCHLIST = "user_watchlist";
     private final String DB_FAVORITE = "user_favorites";
     private final String DB_ALL = "movies";
+    private final String DB_USER_MOVIE = "users_movies";
+    private final String DB_REVIEW = "users_reviews";
 
     @Autowired
     private MovieMapper movieMapper;
@@ -53,10 +51,12 @@ public class ProfileService {
         }
 
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
         Query query = new Query();
         query.addCriteria(Criteria.where("user_id").is(userId));
+        query.addCriteria(Criteria.where("rating").ne(null));
 
-        long totalResults = mongoTemplate.count(query, Rating.class, DB_RATINGS);
+        long totalResults = mongoTemplate.count(query, UserMovie.class, DB_USER_MOVIE);
         int totalPages = (int) Math.ceil((double) totalResults / RATINGS_PER_PAGE);
 
         if (totalPages == 0) {
@@ -75,13 +75,30 @@ public class ProfileService {
         query.skip((long) (page - 1) * RATINGS_PER_PAGE);
         query.limit(RATINGS_PER_PAGE);
 
-        List<Rating> ratings = mongoTemplate.find(query, Rating.class, DB_RATINGS);
+        List<UserMovie> infos = mongoTemplate.find(query, UserMovie.class, DB_USER_MOVIE);
+        List<RatingDTO> ratings = new ArrayList<>();
 
-        List<RatingDTO> results = ratings.stream()
-                .map(rating -> movieMapper.toRatingDTO(rating))
-                .collect(Collectors.toList());
+        for (UserMovie info : infos) {
+            UserMovieDTO infoDTO = profileMapper.toUserMovieDTO(info);
 
-        return new RatingsResponse(page, results, totalPages, (int) totalResults);
+            Query queryReview = new Query();
+            queryReview.addCriteria(Criteria.where("user_id").is(info.getUserId()));
+            queryReview.addCriteria(Criteria.where("movie_id").is(info.getMovie().getId()));
+
+            List<Review> reviews = mongoTemplate.find(queryReview, Review.class, DB_REVIEW);
+            List<ReviewDTO> reviewDTOs = reviews.stream()
+                    .map(review -> {
+                        return movieMapper.toReviewDTO(review);
+                    })
+                    .toList();
+
+            RatingDTO rating = new RatingDTO();
+            rating.setInfo(infoDTO);
+            rating.setReviews(reviewDTOs);
+            ratings.add(rating);
+        }
+
+        return new RatingsResponse(page, ratings, totalPages, (int) totalResults);
     }
 
 
@@ -94,8 +111,9 @@ public class ProfileService {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Query query = new Query();
         query.addCriteria(Criteria.where("user_id").is(userId));
+        query.addCriteria(Criteria.where("in_watchlist").is(true));
 
-        long totalResults = mongoTemplate.count(query, WatchList.class, DB_WATCHLIST);
+        long totalResults = mongoTemplate.count(query, UserMovie.class, DB_USER_MOVIE);
         int totalPages = (int) Math.ceil((double) totalResults / WATCHLIST_PER_PAGE);
 
         if (totalPages == 0) {
@@ -114,16 +132,16 @@ public class ProfileService {
         query.skip((long) (page - 1) * WATCHLIST_PER_PAGE);
         query.limit(WATCHLIST_PER_PAGE);
 
-        List<WatchList> watchList = mongoTemplate.find(query, WatchList.class, DB_WATCHLIST);
+        List<UserMovie> watchList = mongoTemplate.find(query, UserMovie.class, DB_USER_MOVIE);
 
-        List<WatchListDTO> results = watchList.stream()
-                .map(item -> profileMapper.toWatchListDTO(item))
+        List<UserMovieDTO> results = watchList.stream()
+                .map(item -> profileMapper.toUserMovieDTO(item))
                 .collect(Collectors.toList());
 
         return new WatchListResponse(page, results, totalPages, (int) totalResults);
     }
 
-    public WatchListDTO addWatchList(long movieId) {
+    public UserMovieDTO addWatchList(long movieId) {
         // Check input
         Query query = new Query(Criteria.where("id").is(movieId));
         MovieProfile movie = mongoTemplate.findOne(query, MovieProfile.class, DB_ALL);
@@ -135,20 +153,30 @@ public class ProfileService {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         // Check if movie exists in the watchlist
-        Query watchlistQuery = new Query(Criteria.where("user_id").is(userId).and("movie").is(movie));
-        WatchList watchList = mongoTemplate.findOne(watchlistQuery, WatchList.class, DB_WATCHLIST);
+        Query watchlistQuery = new Query();
+        watchlistQuery.addCriteria(Criteria.where("user_id").is(userId));
+        watchlistQuery.addCriteria(Criteria.where("movie").is(movie));
+        watchlistQuery.addCriteria(Criteria.where("in_watchlist").is(true));
+        UserMovie userMovie = mongoTemplate.findOne(watchlistQuery, UserMovie.class, DB_USER_MOVIE);
 
-        if (watchList != null) {
+        if (userMovie != null) {
             throw new ConflictException("Movie is already in the watchlist.");
         }
 
         // Add to watchlist
-        WatchList newWatchList = new WatchList();
-        newWatchList.setUserId(userId);
-        newWatchList.setMovie(movie);
-        WatchList savedWatchList = mongoTemplate.save(newWatchList, DB_WATCHLIST);
+        String userMovieId = userId + "_" + movieId;
 
-        return profileMapper.toWatchListDTO(savedWatchList);
+        Query queryAdd = new Query(Criteria.where("_id").is(userMovieId));
+        Update updateAdd = new Update()
+                .set("user_id", userId)
+                .set("movie", movie)
+                .setOnInsert("rating", null)
+                .set("in_watchlist", true)
+                .setOnInsert("is_favorite", false);
+
+        mongoTemplate.upsert(queryAdd, updateAdd, UserMovie.class, DB_USER_MOVIE);
+        UserMovie result = mongoTemplate.findOne(queryAdd, UserMovie.class, DB_USER_MOVIE);
+        return profileMapper.toUserMovieDTO(result);
     }
 
     public void deleteWatchList(long movieId) {
@@ -164,15 +192,22 @@ public class ProfileService {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         // Check if movie exists in the watchlist
-        Query watchlistQuery = new Query(Criteria.where("user_id").is(userId).and("movie").is(movie));
-        WatchList watchList = mongoTemplate.findOne(watchlistQuery, WatchList.class, DB_WATCHLIST);
+        Query watchlistQuery = new Query();
+        watchlistQuery.addCriteria(Criteria.where("user_id").is(userId));
+        watchlistQuery.addCriteria(Criteria.where("movie").is(movie));
+        watchlistQuery.addCriteria(Criteria.where("in_watchlist").is(true));
 
-        if (watchList == null) {
+        UserMovie userMovie = mongoTemplate.findOne(watchlistQuery, UserMovie.class, DB_USER_MOVIE);
+
+        if (userMovie == null) {
             throw new ResourceNotFoundException("Movie not found in the watchlist.");
         }
 
         // Remove from watchlist
-        mongoTemplate.remove(watchlistQuery, WatchList.class, DB_WATCHLIST);
+        Update updateDelete = new Update()
+                .set("in_watchlist", false);
+
+        mongoTemplate.updateFirst(watchlistQuery, updateDelete, UserMovie.class, DB_USER_MOVIE);
     }
 
 
@@ -185,8 +220,9 @@ public class ProfileService {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Query query = new Query();
         query.addCriteria(Criteria.where("user_id").is(userId));
+        query.addCriteria(Criteria.where("is_favorite").is(true));
 
-        long totalResults = mongoTemplate.count(query, Favorite.class, DB_FAVORITE);
+        long totalResults = mongoTemplate.count(query, UserMovie.class, DB_USER_MOVIE);
         int totalPages = (int) Math.ceil((double) totalResults / FAVORITE_PER_PAGE);
 
         if (totalPages == 0) {
@@ -205,16 +241,16 @@ public class ProfileService {
         query.skip((long) (page - 1) * FAVORITE_PER_PAGE);
         query.limit(FAVORITE_PER_PAGE);
 
-        List<Favorite> favorites = mongoTemplate.find(query, Favorite.class, DB_FAVORITE);
+        List<UserMovie> favorites = mongoTemplate.find(query, UserMovie.class, DB_USER_MOVIE);
 
-        List<FavoriteDTO> results = favorites.stream()
-                .map(item -> profileMapper.toFavoriteDTO(item))
+        List<UserMovieDTO> results = favorites.stream()
+                .map(item -> profileMapper.toUserMovieDTO(item))
                 .collect(Collectors.toList());
 
         return new FavoriteResponse(page, results, totalPages, (int) totalResults);
     }
 
-    public FavoriteDTO addFavorite(long movieId) {
+    public UserMovieDTO addFavorite(long movieId) {
         // Check input
         Query query = new Query(Criteria.where("id").is(movieId));
         MovieProfile movie = mongoTemplate.findOne(query, MovieProfile.class, DB_ALL);
@@ -225,21 +261,31 @@ public class ProfileService {
 
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        // Check if movie exists in favorite list
-        Query favoriteQuery = new Query(Criteria.where("user_id").is(userId).and("movie").is(movie));
-        Favorite favorite = mongoTemplate.findOne(favoriteQuery, Favorite.class, DB_FAVORITE);
+        // Check if movie exists in the favorite list
+        Query favoriteQuery = new Query();
+        favoriteQuery.addCriteria(Criteria.where("user_id").is(userId));
+        favoriteQuery.addCriteria(Criteria.where("movie").is(movie));
+        favoriteQuery.addCriteria(Criteria.where("is_favorite").is(true));
+        UserMovie userMovie = mongoTemplate.findOne(favoriteQuery, UserMovie.class, DB_USER_MOVIE);
 
-        if (favorite != null) {
-            throw new ConflictException("Movie is already in favorite list.");
+        if (userMovie != null) {
+            throw new ConflictException("Movie is already in the favorite list.");
         }
 
         // Add to favorite list
-        Favorite newFavorite = new Favorite();
-        newFavorite.setUserId(userId);
-        newFavorite.setMovie(movie);
-        Favorite savedFavorite = mongoTemplate.save(newFavorite, DB_FAVORITE);
+        String userMovieId = userId + "_" + movieId;
 
-        return profileMapper.toFavoriteDTO(savedFavorite);
+        Query queryAdd = new Query(Criteria.where("_id").is(userMovieId));
+        Update updateAdd = new Update()
+                .set("user_id", userId)
+                .set("movie", movie)
+                .setOnInsert("rating", null)
+                .setOnInsert("in_watchlist", false)
+                .set("is_favorite", true);
+
+        mongoTemplate.upsert(queryAdd, updateAdd, UserMovie.class, DB_USER_MOVIE);
+        UserMovie result = mongoTemplate.findOne(queryAdd, UserMovie.class, DB_USER_MOVIE);
+        return profileMapper.toUserMovieDTO(result);
     }
 
     public void deleteFavorite(long movieId) {
@@ -254,15 +300,22 @@ public class ProfileService {
         // Get current user
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        // Check if movie exists in the favorite list
-        Query favoriteQuery = new Query(Criteria.where("user_id").is(userId).and("movie").is(movie));
-        Favorite favorite = mongoTemplate.findOne(favoriteQuery, Favorite.class, DB_FAVORITE);
+        // Check if movie exists in the watchlist
+        Query favoriteQuery = new Query();
+        favoriteQuery.addCriteria(Criteria.where("user_id").is(userId));
+        favoriteQuery.addCriteria(Criteria.where("movie").is(movie));
+        favoriteQuery.addCriteria(Criteria.where("is_favorite").is(true));
 
-        if (favorite == null) {
+        UserMovie userMovie = mongoTemplate.findOne(favoriteQuery, UserMovie.class, DB_USER_MOVIE);
+
+        if (userMovie == null) {
             throw new ResourceNotFoundException("Movie not found in the favorite list.");
         }
 
         // Remove from favorite list
-        mongoTemplate.remove(favoriteQuery, Favorite.class, DB_FAVORITE);
+        Update updateDelete = new Update()
+                .set("is_favorite", false);
+
+        mongoTemplate.updateFirst(favoriteQuery, updateDelete, UserMovie.class, DB_USER_MOVIE);
     }
 }

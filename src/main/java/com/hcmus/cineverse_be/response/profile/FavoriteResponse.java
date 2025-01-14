@@ -1,15 +1,14 @@
 package com.hcmus.cineverse_be.response.profile;
 
-import com.hcmus.cineverse_be.dto.FavoriteDTO;
-import com.hcmus.cineverse_be.dto.RatingDTO;
+import com.hcmus.cineverse_be.dto.UserMovieDTO;
 import com.hcmus.cineverse_be.response.PaginationResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 @Schema
-public class FavoriteResponse extends PaginationResponse<FavoriteDTO> {
-    public FavoriteResponse(int page, List<FavoriteDTO> results, int totalPages, int totalResults) {
+public class FavoriteResponse extends PaginationResponse<UserMovieDTO> {
+    public FavoriteResponse(int page, List<UserMovieDTO> results, int totalPages, int totalResults) {
         super(page, results, totalPages, totalResults);
     }
 }

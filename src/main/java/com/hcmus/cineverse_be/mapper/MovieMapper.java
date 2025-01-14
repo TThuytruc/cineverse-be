@@ -17,7 +17,7 @@ public interface MovieMapper {
     CrewDTO toCrewDTO(Crew crew);
 
     @Mapping(source = "authorDetails", target = "authorDetails")
-    ReviewDTO toReviewDTO(Review review);
+    ReviewDetailDTO toReviewDetailDTO(ReviewDetail reviewDetail);
     AuthorDetailsDTO toAuthorDetailsDTO(AuthorDetails authorDetails);
-    RatingDTO toRatingDTO(Rating rating);
+    ReviewDTO toReviewDTO(Review review);
 }

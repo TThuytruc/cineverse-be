@@ -16,7 +16,10 @@ public class SecurityConfig {
     @Order(1)
     public SecurityFilterChain privateEndpoints(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .securityMatcher("/private", "/movie/rating", "/profile/**")
+                .securityMatcher("/private",
+                        "/movie/rating-point",
+                        "/movie/review",
+                        "/profile/**")
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().authenticated()
                 )

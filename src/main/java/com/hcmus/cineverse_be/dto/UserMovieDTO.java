@@ -4,10 +4,13 @@ import com.hcmus.cineverse_be.entity.MovieProfile;
 import lombok.Getter;
 import lombok.Setter;
 
+
 @Getter
 @Setter
-public class WatchListDTO {
-    private String _id;
+public class UserMovieDTO {
     private String userId;
-    private MovieProfileDTO movie;
+    private MovieProfile movie;
+    private Integer rating;
+    private boolean isFavorite;
+    private boolean inWatchList;
 }

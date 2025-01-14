@@ -23,5 +23,5 @@ public class MovieDetailDTO {
     private String releaseDate;
     private long budget;
     private long revenue;
-    private List<ReviewDTO> reviews;
+    private List<ReviewDetailDTO> reviews;
 }

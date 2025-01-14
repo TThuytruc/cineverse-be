@@ -41,7 +41,7 @@ public class MovieDetail {
     private List<Crew> crew;
 
     @Field("reviews")
-    private List<Review> reviews;
+    private List<ReviewDetail> reviewDetails;
 
     private String status;
 

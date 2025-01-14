@@ -6,7 +6,6 @@ import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
 public interface ProfileMapper {
-    WatchListDTO toWatchListDTO(WatchList watchList);
-    FavoriteDTO toFavoriteDTO(Favorite favorite);
-//    MovieProfileDTO toMovieProfileDTO(MovieProfile movieProfile);
+    MovieProfileDTO toMovieProfileDTO(MovieProfile movieProfile);
+    UserMovieDTO toUserMovieDTO(UserMovie userMovie);
 }
