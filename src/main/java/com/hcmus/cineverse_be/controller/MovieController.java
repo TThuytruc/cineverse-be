@@ -4,8 +4,10 @@ import com.hcmus.cineverse_be.dto.GenreDTO;
 import com.hcmus.cineverse_be.dto.LastestTrailersDTO;
 import com.hcmus.cineverse_be.dto.MovieDetailDTO;
 import com.hcmus.cineverse_be.dto.MovieTrendingDTO;
+import com.hcmus.cineverse_be.dto.SimilarMoviesDTO;
 import com.hcmus.cineverse_be.entity.Genre;
 import com.hcmus.cineverse_be.entity.MovieTrending;
+import com.hcmus.cineverse_be.entity.SimilarMovies;
 import com.hcmus.cineverse_be.response.BasicResponse;
 import com.hcmus.cineverse_be.response.PaginationResponse;
 import com.hcmus.cineverse_be.response.movie.SearchMovieResponse;
@@ -251,6 +253,30 @@ public class MovieController {
 
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid page: Page must be an integer.");
+        }
+    }
+
+    @Operation(
+            summary = "Get similar movies",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            content = @Content(schema = @Schema(implementation = TrendingMoviesResponse.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Invalid page/Invalid period",
+                            content = @Content(schema = @Schema(implementation = BasicResponse.class))
+                    )
+            }
+    )
+    @GetMapping("/{id}/similar")
+    public SimilarMoviesDTO getSimilarMovies(@PathVariable String id) {
+        try {
+            long movieId = Long.parseLong(id);
+            return movieService.getSimilarMovies(movieId);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid ID: Movie ID must be an integer.");
         }
     }
 }

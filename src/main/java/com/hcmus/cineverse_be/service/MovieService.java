@@ -6,6 +6,7 @@ import com.hcmus.cineverse_be.entity.LastestTrailers;
 import com.hcmus.cineverse_be.entity.MovieDetail;
 import com.hcmus.cineverse_be.entity.MovieSearch;
 import com.hcmus.cineverse_be.entity.MovieTrending;
+import com.hcmus.cineverse_be.entity.SimilarMovies;
 import com.hcmus.cineverse_be.entity.VideoDetails;
 import com.hcmus.cineverse_be.exception.ResourceNotFoundException;
 import com.hcmus.cineverse_be.mapper.MovieMapper;
@@ -543,4 +544,18 @@ public class MovieService {
 
         return results;
     }
+
+    public SimilarMoviesDTO getSimilarMovies(long movieId) {
+
+        Query query = new Query(Criteria.where("tmdb_id").is(movieId));
+        SimilarMovies similarMovies = mongoTemplate.findOne(query, SimilarMovies.class, "similar");
+
+        if (similarMovies == null) {
+            throw new ResourceNotFoundException("Similar movies not found.");
+        }
+
+        SimilarMoviesDTO similarMoviesDTO = movieMapper.toSimilarMoviesDTO(similarMovies);
+        return similarMoviesDTO;
+    }
+
 }
