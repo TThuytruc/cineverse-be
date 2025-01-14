@@ -34,6 +34,9 @@ public class MovieDetail {
 
     private List<Genre> genres;
 
+    @Field("genre_ids")
+    private List<Integer> genreIds;
+
     @Field("credits.cast")
     private List<Cast> cast;
 
