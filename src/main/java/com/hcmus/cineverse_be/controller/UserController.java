@@ -3,7 +3,9 @@ package com.hcmus.cineverse_be.controller;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.hcmus.cineverse_be.request.RegisterRequest;
+import com.hcmus.cineverse_be.response.BasicDataResponse;
 import com.hcmus.cineverse_be.response.BasicResponse;
+import com.hcmus.cineverse_be.response.auth.ProfileInformationResponse;
 import com.hcmus.cineverse_be.response.auth.RefreshTokenResponse;
 import com.hcmus.cineverse_be.response.auth.ValidationErrorResponse;
 import com.hcmus.cineverse_be.service.UserService;
@@ -126,5 +128,14 @@ public class UserController {
     @GetMapping("/verify-email-callback")
     public void emailVerificationCallback(@RequestParam String oobCode) {
         userService.verifyEmailCallback(oobCode);
+    }
+
+    @GetMapping("/user-info")
+    public BasicDataResponse<ProfileInformationResponse> getUserInfo(@RequestParam("idToken") String idToken) {
+        ProfileInformationResponse response = userService.getUserInformation(idToken);
+        return BasicDataResponse.<ProfileInformationResponse>builder()
+                .message("User information retrieved successfully.")
+                .result(response)
+                .build();
     }
 }

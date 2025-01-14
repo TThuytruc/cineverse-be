@@ -2,8 +2,12 @@ package com.hcmus.cineverse_be.client;
 
 import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
+import com.google.firebase.auth.UserRecord;
 import com.hcmus.cineverse_be.config.FirebaseConfigurationProperties;
 import com.hcmus.cineverse_be.exception.FirebaseAuthenticationException;
+import com.hcmus.cineverse_be.response.auth.ProfileInformationResponse;
 import com.hcmus.cineverse_be.response.auth.RefreshTokenResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -75,6 +79,34 @@ public class FirebaseAuthClient {
             return link;
         } catch (Exception e) {
             throw new FirebaseAuthenticationException("Failed to generate verification email.");
+        }
+    }
+
+    public ProfileInformationResponse getUserEmailAndUidFromIdToken(@NonNull final String idToken) {
+        try {
+            FirebaseToken decodedToken = firebaseAuth.verifyIdToken(idToken);
+
+            ProfileInformationResponse profileInformationResponse =  ProfileInformationResponse.builder()
+                    .email(decodedToken.getEmail())
+                    .uid(decodedToken.getUid())
+                    .build();
+
+            long creationDate = getUserCreationDate(decodedToken.getUid());
+
+            profileInformationResponse.setCreatedAt(creationDate);
+
+            return profileInformationResponse;
+        } catch (Exception e) {
+            throw new FirebaseAuthenticationException("Failed to get user email from idToken: " + e);
+        }
+    }
+
+    public long getUserCreationDate(@NonNull final String uid) {
+        try {
+            UserRecord userRecord = firebaseAuth.getUser(uid);
+            return userRecord.getUserMetadata().getCreationTimestamp();
+        } catch (FirebaseAuthException e) {
+            throw new FirebaseAuthenticationException("Failed to get user creation date: "+ e);
         }
     }
 }
