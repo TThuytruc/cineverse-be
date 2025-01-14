@@ -611,8 +611,8 @@ public class MovieService {
     public ReviewDTO addReview(long movieId, String review) {
 
         // Check input
-        Query queryCheck = new Query(Criteria.where("id").is(movieId));
-        MovieDetail movieDetail = mongoTemplate.findOne(queryCheck, MovieDetail.class, DB_ALL);
+        Query queryMovie = new Query(Criteria.where("id").is(movieId));
+        MovieDetail movieDetail = mongoTemplate.findOne(queryMovie, MovieDetail.class, DB_ALL);
 
         if (movieDetail == null) {
             throw new ResourceNotFoundException("Movie not found.");
@@ -663,7 +663,7 @@ public class MovieService {
         Update updateReview = new Update();
         updateReview.push("reviews", newReviewDetail);
 
-        mongoTemplate.updateFirst(query, updateReview, MovieDetail.class, DB_ALL);
+        mongoTemplate.updateFirst(queryMovie, updateReview, MovieDetail.class, DB_ALL);
 
         return movieMapper.toReviewDTO(savedReview);
     }
