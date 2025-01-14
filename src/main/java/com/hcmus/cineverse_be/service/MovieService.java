@@ -2,9 +2,12 @@ package com.hcmus.cineverse_be.service;
 
 import com.hcmus.cineverse_be.dto.*;
 import com.hcmus.cineverse_be.entity.Genre;
+import com.hcmus.cineverse_be.entity.LastestTrailers;
 import com.hcmus.cineverse_be.entity.MovieDetail;
 import com.hcmus.cineverse_be.entity.MovieSearch;
 import com.hcmus.cineverse_be.entity.MovieTrending;
+import com.hcmus.cineverse_be.entity.SimilarMovies;
+import com.hcmus.cineverse_be.entity.VideoDetails;
 import com.hcmus.cineverse_be.exception.ResourceNotFoundException;
 import com.hcmus.cineverse_be.mapper.MovieMapper;
 import com.hcmus.cineverse_be.response.AIApiResponse;
@@ -173,22 +176,35 @@ public class MovieService {
         return movieDetailDTO;
     }
 
-    public SearchMovieResponse getSearchMovies(String query, int page) {
+    public SearchMovieResponse getSearchMovies(String query, int page, String fromDate, String toDate, List<Integer> genreIds) {
 
         if (page <= 0) {
             throw new IllegalArgumentException("Invalid page: Page must be greater than 0.");
         }
-        if (query == null || query.isEmpty()) {
-            throw new IllegalArgumentException("There are no movies that matched your query");
-        }
 
         String collectionName = "movies";
 
-        Query countQuery = new Query();
-        countQuery.addCriteria(
-                Criteria.where("title").regex(query, "i")
-        );
+        Criteria criteria = new Criteria();
+        if (query != null && !query.trim().isEmpty()) {
+            criteria.and("title").regex(query.trim(), "i");
+        }
 
+        if (fromDate != null || toDate != null) {
+            Criteria dateCriteria = new Criteria("release_date");
+            if (fromDate != null) {
+                dateCriteria.gte(fromDate); // greater than or equal
+            }
+            if (toDate != null) {
+                dateCriteria.lte(toDate); // less than or equal
+            }
+            criteria.andOperator(dateCriteria);
+        }
+
+        if (genreIds != null && !genreIds.isEmpty()) {
+            criteria.and("genres_id").in(genreIds);
+        }
+
+        Query countQuery = new Query().addCriteria(criteria);
         long totalResults = mongoTemplate.count(countQuery, MovieSearch.class, collectionName);
         int totalPages = (int) Math.ceil((double) totalResults / MOVIES_PER_PAGE);
 
@@ -197,10 +213,7 @@ public class MovieService {
         }
 
 
-        Query searchQuery = new Query();
-        searchQuery.addCriteria(
-                Criteria.where("title").regex(query, "i")
-        );
+        Query searchQuery = new Query().addCriteria(criteria);
         searchQuery.skip((long) (page - 1) * MOVIES_PER_PAGE);
         searchQuery.limit(MOVIES_PER_PAGE);
         List<MovieSearch> searchMovies = mongoTemplate.find(searchQuery, MovieSearch.class, collectionName);
@@ -462,4 +475,87 @@ public class MovieService {
                 .map(item -> (String) item)
                 .collect(Collectors.toList());
     }
+
+    public List<GenreDTO> getAllGenres() {
+        List<Genre> genres = mongoTemplate.findAll(Genre.class, DB_GENRES);
+
+        return genres.stream()
+                .map(movieMapper::toGenreDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<LastestTrailersDTO> getLastestTrailers() {
+        Query query = new Query();
+        query.limit(12);
+
+        List<LastestTrailers> lastTrailers = mongoTemplate.find(query, LastestTrailers.class, "movies");
+        List<LastestTrailersDTO> lastestTrailersDTO = lastTrailers.stream()
+                .map(item -> {
+                    LastestTrailersDTO dto = new LastestTrailersDTO();
+                    dto.setId(item.getId());
+                    dto.setTitle(item.getTitle());
+                    
+                    if (item.getTrailers() != null && !item.getTrailers().isEmpty()) {
+                        dto.setTrailers(List.of(item.getTrailers().get(0)));
+                    } else {
+                        dto.setTrailers(null);
+                    }
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        return lastestTrailersDTO;
+    }
+
+    public List<MovieTrendingDTO> getMoviePopular(int page) {
+
+        if (page <= 0) {
+            throw new IllegalArgumentException("Invalid page: Page must be greater than 0.");
+        }
+
+        String collectionName = "movies_popular";
+
+        long totalResults = mongoTemplate.count(new Query(), MovieTrending.class, collectionName);
+        int totalPages = (int) Math.ceil((double) totalResults / MOVIES_PER_PAGE);
+
+        if (page > totalPages) {
+            throw new IllegalArgumentException("Invalid page: Page must be less than or equal to " + totalPages + ".");
+        }
+
+
+        Query query = new Query();
+        query.skip((long) (page - 1) * MOVIES_PER_PAGE);
+        query.limit(MOVIES_PER_PAGE);
+        List<MovieTrending> trendingMovies = mongoTemplate.find(query, MovieTrending.class, collectionName);
+
+        List<MovieTrendingDTO> results = trendingMovies.stream()
+                .map(movie -> {
+                    if(movie.getPosterPath() != null) {
+                        movie.setPosterPath(baseSmallPosterUrl + movie.getPosterPath());
+                    }
+                    if(movie.getBackdropPath() != null) {
+                        movie.setBackdropPath(originalImageUrl + movie.getBackdropPath());
+                    }
+
+                    return movieMapper.toMovieTrendingDTO(movie);
+                })
+                .collect(Collectors.toList());
+
+        return results;
+    }
+
+    public SimilarMoviesDTO getSimilarMovies(long movieId) {
+
+        Query query = new Query(Criteria.where("tmdb_id").is(movieId));
+        SimilarMovies similarMovies = mongoTemplate.findOne(query, SimilarMovies.class, "similar");
+
+        if (similarMovies == null) {
+            throw new ResourceNotFoundException("Similar movies not found.");
+        }
+
+        SimilarMoviesDTO similarMoviesDTO = movieMapper.toSimilarMoviesDTO(similarMovies);
+        return similarMoviesDTO;
+    }
+
 }

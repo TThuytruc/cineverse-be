@@ -10,6 +10,8 @@ public interface MovieMapper {
     MovieTrendingDTO toMovieTrendingDTO(MovieTrending movie);
     MovieDetailDTO toMovieDetailDTO(MovieDetail movieDetail);
     MovieSearchDTO toMovieSearchDTO(MovieSearch movieSearch);
+    LastestTrailersDTO toLastestTrailersDTO(LastestTrailers lastestTrailers);
+    SimilarMoviesDTO toSimilarMoviesDTO(SimilarMovies similarMovies);
     GenreDTO toGenreDTO(Genre genre);
     CastDTO toCastDTO(Cast cast);
     CrewDTO toCrewDTO(Crew crew);
