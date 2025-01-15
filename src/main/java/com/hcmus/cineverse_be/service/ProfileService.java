@@ -27,9 +27,6 @@ public class ProfileService {
     private final int WATCHLIST_PER_PAGE = 20;
     private final int FAVORITE_PER_PAGE = 20;
 
-    private final String DB_RATINGS = "user_ratings";
-    private final String DB_WATCHLIST = "user_watchlist";
-    private final String DB_FAVORITE = "user_favorites";
     private final String DB_ALL = "movies";
     private final String DB_USER_MOVIE = "users_movies";
     private final String DB_REVIEW = "users_reviews";
