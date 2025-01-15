@@ -5,6 +5,7 @@ import com.hcmus.cineverse_be.client.FirebaseAuthClient;
 import com.hcmus.cineverse_be.entity.User;
 import com.hcmus.cineverse_be.exception.FirebaseAuthenticationException;
 import com.hcmus.cineverse_be.exception.ValidationException;
+import com.hcmus.cineverse_be.response.auth.ProfileInformationResponse;
 import com.hcmus.cineverse_be.response.auth.RefreshTokenResponse;
 import com.hcmus.cineverse_be.validation.UserValidation;
 import com.resend.*;
@@ -185,8 +186,7 @@ public class UserService {
             throw new RuntimeException("An error occurred while getting username.", e);
         }
     }
-
-
+    
     public RefreshTokenResponse refreshAccessToken(@NonNull final String refreshToken) {
         return firebaseAuthClient.refreshAccessToken(refreshToken);
     }
@@ -240,5 +240,32 @@ public class UserService {
         } else {
             return getUsernameByUid(uid);
         }
+    }
+
+    public ProfileInformationResponse getUserInformation(@NonNull final String idToken) {
+        ProfileInformationResponse profileInformationResponse = firebaseAuthClient.getUserEmailAndUidFromIdToken(idToken);
+
+        UserRecord userRecord = null;
+        try {
+            userRecord = FirebaseAuth.getInstance().getUser(profileInformationResponse.getUid());
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException("An error occurred while getting user record.", e);
+        }
+
+        boolean isGoogleUser = false;
+        for (UserInfo provider : userRecord.getProviderData()) {
+            if ("google.com".equals(provider.getProviderId())) {
+                isGoogleUser = true;
+                break;
+            }
+        }
+
+        if (isGoogleUser) {
+            profileInformationResponse.setUsername(userRecord.getDisplayName());
+        } else {
+            profileInformationResponse.setUsername(getUsernameByUid(profileInformationResponse.getUid()));
+        }
+
+        return profileInformationResponse;
     }
 }

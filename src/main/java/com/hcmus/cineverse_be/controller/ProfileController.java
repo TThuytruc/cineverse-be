@@ -1,6 +1,7 @@
 package com.hcmus.cineverse_be.controller;
 
 import com.hcmus.cineverse_be.dto.UserMovieDTO;
+import com.hcmus.cineverse_be.entity.UserMovie;
 import com.hcmus.cineverse_be.request.AddFavoriteRequest;
 import com.hcmus.cineverse_be.request.AddWatchListRequest;
 import com.hcmus.cineverse_be.response.BasicDataResponse;
@@ -76,11 +77,13 @@ public class ProfileController {
     @GetMapping("/watchlist")
     @SecurityRequirement(name = "BearerAuth")
     public WatchListResponse getWatchList(
-            @RequestParam(defaultValue = "1") String page) {
+            @RequestParam(defaultValue = "1") String page,
+            @RequestParam(defaultValue = "5") String limit) {
 
         try {
             int pageNum = Integer.parseInt(page);
-            return profileService.getWatchListByUser(pageNum);
+            int limitNum = Integer.parseInt(limit);
+            return profileService.getWatchListByUser(pageNum, limitNum);
 
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid page: Page must be an integer.");
@@ -229,5 +232,15 @@ public class ProfileController {
 
         BasicResponse response = new BasicResponse("Remove from favorite list successfully.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @GetMapping("/movie-details/me")
+    @SecurityRequirement(name = "BearerAuth")
+    public BasicDataResponse<UserMovieDTO> getMovieDetailsByMovieIdAndUserId(@RequestParam("movieId") String movieId) {
+        UserMovieDTO userMovie = profileService.getMovieDetailsByMovieIdAndUserId(Long.parseLong(movieId));
+        return BasicDataResponse.<UserMovieDTO>builder()
+                .message("Get movie details successfully.")
+                .result(userMovie)
+                .build();
     }
 }

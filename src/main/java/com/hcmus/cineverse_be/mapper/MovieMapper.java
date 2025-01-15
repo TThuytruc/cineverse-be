@@ -8,6 +8,8 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface MovieMapper {
     MovieTrendingDTO toMovieTrendingDTO(MovieTrending movie);
+
+    @Mapping(source = "reviewDetails", target = "reviews")
     MovieDetailDTO toMovieDetailDTO(MovieDetail movieDetail);
     MovieSearchDTO toMovieSearchDTO(MovieSearch movieSearch);
     MovieProfileDTO toMovieProfileDTO(MovieProfile movieProfile);
@@ -19,6 +21,8 @@ public interface MovieMapper {
 
     @Mapping(source = "authorDetails", target = "authorDetails")
     ReviewDetailDTO toReviewDetailDTO(ReviewDetail reviewDetail);
+
     AuthorDetailsDTO toAuthorDetailsDTO(AuthorDetails authorDetails);
     ReviewDTO toReviewDTO(Review review);
+
 }
