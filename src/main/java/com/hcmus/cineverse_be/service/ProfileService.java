@@ -99,9 +99,9 @@ public class ProfileService {
     }
 
 
-    public WatchListResponse getWatchListByUser(int page) {
+    public WatchListResponse getWatchListByUser(int page, int limit) {
 
-        if (page <= 0) {
+        if (page <= 0 || limit <= 0) {
             throw new IllegalArgumentException("Invalid page: Page must be greater than 0.");
         }
 
@@ -111,7 +111,7 @@ public class ProfileService {
         query.addCriteria(Criteria.where("in_watchlist").is(true));
 
         long totalResults = mongoTemplate.count(query, UserMovie.class, DB_USER_MOVIE);
-        int totalPages = (int) Math.ceil((double) totalResults / WATCHLIST_PER_PAGE);
+        int totalPages = (int) Math.ceil((double) totalResults / limit );//WATCHLIST_PER_PAGE
 
         if (totalPages == 0) {
             totalPages++;
@@ -314,5 +314,28 @@ public class ProfileService {
                 .set("is_favorite", false);
 
         mongoTemplate.updateFirst(favoriteQuery, updateDelete, UserMovie.class, DB_USER_MOVIE);
+    }
+
+    public UserMovieDTO getMovieDetailsByMovieIdAndUserId(long movieId) {
+        // Get current user
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        System.out.println("movieId: " + movieId);
+
+        Query movieQuery = new Query(Criteria.where("id").is(movieId));
+        MovieProfile movie = mongoTemplate.findOne(movieQuery, MovieProfile.class, DB_ALL);
+
+        if (movie == null) {
+            throw new ResourceNotFoundException("Movie not found.");
+        }
+
+
+        Query query = new Query(Criteria.where("movie").is(movie).and("user_id").is(userId));
+        UserMovie userMovie = mongoTemplate.findOne(query, UserMovie.class, DB_USER_MOVIE);
+
+        if (userMovie == null) {
+            throw new ResourceNotFoundException("Movie not found.");
+        }
+        return profileMapper.toUserMovieDTO(userMovie);
     }
 }

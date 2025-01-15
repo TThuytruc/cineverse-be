@@ -1,12 +1,14 @@
 package com.hcmus.cineverse_be.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class MovieDetailDTO {
     private long id;
     private String title;
