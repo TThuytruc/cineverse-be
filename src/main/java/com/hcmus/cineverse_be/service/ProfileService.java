@@ -102,9 +102,9 @@ public class ProfileService {
     }
 
 
-    public WatchListResponse getWatchListByUser(int page) {
+    public WatchListResponse getWatchListByUser(int page, int limit) {
 
-        if (page <= 0) {
+        if (page <= 0 || limit <= 0) {
             throw new IllegalArgumentException("Invalid page: Page must be greater than 0.");
         }
 
@@ -114,7 +114,7 @@ public class ProfileService {
         query.addCriteria(Criteria.where("in_watchlist").is(true));
 
         long totalResults = mongoTemplate.count(query, UserMovie.class, DB_USER_MOVIE);
-        int totalPages = (int) Math.ceil((double) totalResults / WATCHLIST_PER_PAGE);
+        int totalPages = (int) Math.ceil((double) totalResults / limit );//WATCHLIST_PER_PAGE
 
         if (totalPages == 0) {
             totalPages++;

@@ -143,12 +143,13 @@ public class MovieService {
     public MovieDetailDTO getMovieDetail(long movieId) {
 
         Query query = new Query(Criteria.where("id").is(movieId));
-        MovieDetail movieDetail = mongoTemplate.findOne(query, MovieDetail.class, DB_ALL);
+            MovieDetail movieDetail = mongoTemplate.findOne(query, MovieDetail.class, DB_ALL);
 
         if (movieDetail == null) {
             throw new ResourceNotFoundException("Movie not found.");
         }
 
+       // System.out.println("review size: " + movieDetail.getReviewDetails().size() + " - " + movieDetail.getReviewDetails().get(0));
         MovieDetailDTO movieDetailDTO = movieMapper.toMovieDetailDTO(movieDetail);
 
         if(movieDetailDTO.getPosterPath() != null) {

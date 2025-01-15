@@ -12,14 +12,15 @@ import static lombok.AccessLevel.*;
 @AllArgsConstructor
 @FieldDefaults(level = PRIVATE)
 public class AuthorDetails {
-    @Field(write = Field.Write.ALWAYS)
+    @Field(name= "name")//, write = Field.Write.ALWAYS)
     String name;
 
-    @Field(write = Field.Write.ALWAYS)
+    @Field(name = "username")//, write = Field.Write.ALWAYS)
     String username;
 
-    @Field(name = "avatar_path", write = Field.Write.ALWAYS)
+    @Field(name = "avatar_path")//, write = Field.Write.ALWAYS)
     String avatarPath;
 
+    @Field(name = "rating")//, write = Field.Write.ALWAYS)
     Integer rating;
 }

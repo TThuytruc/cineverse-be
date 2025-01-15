@@ -77,11 +77,13 @@ public class ProfileController {
     @GetMapping("/watchlist")
     @SecurityRequirement(name = "BearerAuth")
     public WatchListResponse getWatchList(
-            @RequestParam(defaultValue = "1") String page) {
+            @RequestParam(defaultValue = "1") String page,
+            @RequestParam(defaultValue = "5") String limit) {
 
         try {
             int pageNum = Integer.parseInt(page);
-            return profileService.getWatchListByUser(pageNum);
+            int limitNum = Integer.parseInt(limit);
+            return profileService.getWatchListByUser(pageNum, limitNum);
 
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid page: Page must be an integer.");

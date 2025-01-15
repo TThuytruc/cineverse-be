@@ -16,6 +16,7 @@ import static lombok.AccessLevel.PRIVATE;
 @AllArgsConstructor
 @FieldDefaults(level = PRIVATE)
 public class ReviewDetail {
+    @Field("author")
     String author;
 
     @Field("author_details")
@@ -25,11 +26,13 @@ public class ReviewDetail {
 
     @Field("created_at")
     String createdAt;
-    @Field(name = "updated_at", write = Field.Write.ALWAYS)
+    @Field(name = "updated_at")//, write = Field.Write.ALWAYS)
     String updatedAt;
 
     @Field("id")
     String id;
-    @Field(write = Field.Write.ALWAYS)
+    //@Field(write = Field.Write.ALWAYS)
+
+    @Field(name = "url")//, write = Field.Write.ALWAYS)
     String url;
 }
