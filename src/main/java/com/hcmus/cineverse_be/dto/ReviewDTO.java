@@ -3,6 +3,7 @@ package com.hcmus.cineverse_be.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Getter
@@ -10,6 +11,6 @@ import java.time.LocalDateTime;
 public class ReviewDTO {
     private String userId;
     private long movieId;
-    private LocalDateTime createdAt;
+    private String createdAt;
     private String review;
 }
