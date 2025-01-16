@@ -126,8 +126,8 @@ public class ProfileService {
         }
 
 
-        query.skip((long) (page - 1) * WATCHLIST_PER_PAGE);
-        query.limit(WATCHLIST_PER_PAGE);
+        query.skip((long) (page - 1) * limit);
+        query.limit(limit);
 
         List<UserMovie> watchList = mongoTemplate.find(query, UserMovie.class, DB_USER_MOVIE);
 
