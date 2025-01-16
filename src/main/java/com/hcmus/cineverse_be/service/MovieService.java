@@ -24,7 +24,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -656,8 +658,8 @@ public class MovieService {
         newReviewDetail.setAuthor(userService.getUserName());
         newReviewDetail.setAuthorDetails(authorDetails);
         newReviewDetail.setContent(review);
-        newReviewDetail.setCreatedAt(LocalDateTime.now().toString());
-        newReviewDetail.setUpdatedAt(null);
+        newReviewDetail.setCreatedAt(Instant.now().truncatedTo(ChronoUnit.MILLIS).toString());
+        newReviewDetail.setUpdatedAt(Instant.now().truncatedTo(ChronoUnit.MILLIS).toString());
         newReviewDetail.setId(savedReview.get_id());
         newReviewDetail.setUrl(null);
 

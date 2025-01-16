@@ -6,7 +6,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Getter
 @Setter
@@ -21,7 +23,7 @@ public class Review {
     private long movieId;
 
     @Field("create_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private String createdAt = Instant.now().truncatedTo(ChronoUnit.MILLIS).toString();
 
     private String review;
 }
