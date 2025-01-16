@@ -18,14 +18,21 @@ jobs:
       # create file .env
       - name: Create .env file
         run: |
-          echo "FIREBASE_ANDROID_API_KEY=${{ secrets.FIREBASE_ANDROID_API_KEY }}" >> ./.env
-          echo "FIREBASE_ANDROID_APP_ID=${{ secrets.FIREBASE_ANDROID_APP_ID }}" >> ./.env
-          echo "FIREBASE_ANDROID_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_ANDROID_MESSAGING_SENDER_ID }}" >> ./.env
-          echo "FIREBASE_ANDROID_PROJECT_ID=${{ secrets.FIREBASE_ANDROID_PROJECT_ID }}" >> ./.env
-          echo "FIREBASE_ANDROID_STORAGE_BUCKET=${{ secrets.FIREBASE_ANDROID_STORAGE_BUCKET }}" >> ./.env
-          echo "GOOGLE_OAUTH_CLIENT_ID=${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}" >> ./.env
-          echo "JARVIS_URL=${{ secrets.JARVIS_URL }}" >> ./.env
-          echo "KNOWLEDGE_URL=${{ secrets.KNOWLEDGE_URL }}" >> ./.env
+          echo "WEB_API_KEY=${{ secrets.WEB_API_KEY }}" >> ./.env
+          echo "TMDB_ACCESS_TOKEN=${{ secrets.TMDB_ACCESS_TOKEN }}" >> ./.env
+          echo "FIREBASE_CREDENTIALS_JSON=${{ secrets.FIREBASE_CREDENTIALS_JSON }}" >> ./.env
+          echo "HAS_SWAGGER=${{ secrets.HAS_SWAGGER }}" >> ./.env
+          echo "DATABASE_URI=${{ secrets.DATABASE_URI }}" >> ./.env
+          echo "DB=${{ secrets.DB }}" >> ./.env
+          echo "DATABASE_URI_CLOUD=${{ secrets.DATABASE_URI_CLOUD }}" >> ./.env
+          echo "DATABASE_URI_CLOUD1=${{ secrets.DATABASE_URI_CLOUD1 }}" >> ./.env
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> ./.env
+          echo "AI_SERVICE_BASE_URL=${{ secrets.AI_SERVICE_BASE_URL }}" >> ./.env
+          echo "LLM_API_KEY=${{ secrets.LLM_API_KEY }}" >> ./.env
+          echo "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" >> ./.env
+          echo "EMAIL_USERNAME=${{ secrets.EMAIL_USERNAME }}" >> ./.env
+          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> ./.env
+          echo "DOMAIN_AUTH_CALLBACK_URL=${{ secrets.DOMAIN_AUTH_CALLBACK_URL }}" >> ./.env
       
       # Load Google Service file
       # - name: Load Google Service file
@@ -39,59 +46,38 @@ jobs:
 
       #echo $DATA | base64 -di > ./android/app/google-services.json
       
-      # 2. install Java
-      - uses: actions/setup-java@v3
-        with:
-          java-version: '17.x'
-          distribution: 'temurin'
-          cache: maven
+      # # 2. install Java
+      # - uses: actions/setup-java@v2
+      #   with:
+      #     java-version: '17.x'
+      #     distribution: 'temurin'
+      #     cache: maven
       
-      - name: Build with Maven
-        run: mvn clean install -DskipTests
+      # - name: Build with Maven
+      #   run: mvn clean install
       
       # 3. Build Docker image
-      - name: Login to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
       - name: Build Docker image
-        run: docker build -t spring-app .
+        run: docker build -t webdevelopmentadvanced2425/cineverse_be:latest .
 
-      # 4. config Flutter and check environment
-      - run: flutter config --no-analytics
-      - run: flutter doctor
+      # 4. Push Docker image to Docker Hub
+      - name: Push Docker image to Docker Hub
+        run: |
+          echo "webdevelopmentadvanced2425" | docker login -u "tientructhinh" --password-stdin
+          docker push webdevelopmentadvanced2425/cineverse_be:latest
 
-      # 5. install dependencies
-      - run: flutter pub get
-
-      # # 6. run automation testing
-      # - run: flutter test
-
-      # 7. Build APK debug and AAB
-      - run: flutter build apk --debug --split-per-abi
-      - run: flutter build appbundle --release
-
-      # 8. Push APK Debug into GitHub Releases
-      - name: Push to Debug Releases
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: "build/app/outputs/apk/debug/*"
-          tag: v1.0.${{ github.run_number }}-apk-debug-${{ github.sha }}
-          token: ${{ secrets.TOKEN_CICD }}
-      
-      # 9. Push APK Release and AAB into GitHub Releases
-      # - name: Push to Release
-      #   uses: ncipollo/release-action@v1
+      # # 3. Build Docker image
+      # - name: Build & push Docker image
+      #   uses: mr-smithers-excellent/docker-build-push@v5
       #   with:
-      #     artifacts: |
-      #       build/app/outputs/apk/release/*.apk
-      #       build/app/outputs/bundle/release/*.aab
-      #     tag: v1.0.${{ github.run_number }}-aab-apk-release-${{ github.sha }}
-      #     token: ${{ secrets.TOKEN_CICD }}
-        
-       # 10. Deploy APK into Firebase App Distribution
-      - name: Deploy APK to Firebase
-        run: firebase appdistribution:distribute  ./build/app/outputs/apk/debug/app-x86_64-debug.apk --app ${{ secrets.FIREBASE_ANDROID_APP_ID }}  #--release-notes "Release notes for this build AMD2024"
-      #  --app ${{ secrets.FIREBASE_ANDROID_APP_ID }} ./build/app/outputs/bundle/release/app-release.aab        
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+      #     image: webdevelopmentadvanced2425/cineverse_be
+      #     tags: latest
+      #     registry: docker.io
+      #     dockerfile: Dockerfile
+      #     username: webdevelopmentadvanced2425
+      #     password: tientructhinh
+
+    #  env:
+    #       FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
 #Warning: Artifact pattern :build/app/outputs/apk/release/*.apk did not match any files
