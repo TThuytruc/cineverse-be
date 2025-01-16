@@ -63,9 +63,11 @@ jobs:
       # 4. Push Docker image to Docker Hub
       - name: Push Docker image to Docker Hub
         run: |
+          docker login -u webdevelopmentadvanced2425 -p tientructhinh
           docker push webdevelopmentadvanced2425/cineverse_be:latest
-      # echo webdevelopmentadvanced2425 | docker login -u tientructhinh --password-stdin
           
+      # echo webdevelopmentadvanced2425 | docker login -u tientructhinh --password-stdin
+          #echo "tientructhinh" | docker login -u "webdevelopmentadvanced2425" --password-stdin
       # # 3. Build Docker image
       # - name: Build & push Docker image
       #   uses: mr-smithers-excellent/docker-build-push@v5
