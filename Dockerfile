@@ -3,6 +3,6 @@ COPY . .
 RUN mvn clean package -DskipTests
 
 FROM openjdk:17.0.1-jdk-slim
-COPY --from=build /target/cineverse_be-0.0.1-SNAPSHOT.jar cineverse_be.jar
+COPY --from=build /target/cineverse-be-0.0.1-SNAPSHOT.jar cineverse-be.jar
 EXPOSE 8081
-ENTRYPOINT ["java", "-jar", "cineverse_be.jar"]
+ENTRYPOINT ["java", "-jar", "cineverse-be.jar"]
