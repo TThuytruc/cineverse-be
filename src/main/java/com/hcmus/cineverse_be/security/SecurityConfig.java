@@ -50,7 +50,7 @@ public class SecurityConfig {
 
     private CorsConfigurationSource corsConfigurationSource() {
         final var corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(List.of("https://cineverse-fe-webserver.onrender.com"));
+        corsConfiguration.setAllowedOrigins(List.of("https://cineverse-fe-webserver.onrender.com/"));
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
         corsConfiguration.setAllowCredentials(true);
