@@ -39,7 +39,8 @@ public class SecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain publicEndpoints(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
+            http.csrf(csrf -> csrf.disable())
+                .cors(corsConfigurer -> corsConfigurer.configurationSource(corsConfigurationSource()))
                 .securityMatcher("/public", "/user/**", "/movie/**")
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll()
@@ -50,12 +51,12 @@ public class SecurityConfig {
 
     private CorsConfigurationSource corsConfigurationSource() {
         final var corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(List.of("https://cineverse-fe-eta.vercel.app/"));
+        corsConfiguration.setAllowedOrigins(List.of("https://cineverse-fe-webserver.onrender.com"));
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
         corsConfiguration.setAllowCredentials(true);
         final var corsConfigurationSource = new UrlBasedCorsConfigurationSource();
         corsConfigurationSource.registerCorsConfiguration("/**", corsConfiguration);
-        return corsConfigurationSource;
+        return corsConfigurationSource; 
     }
 }
